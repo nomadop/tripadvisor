@@ -1,0 +1,50 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Name:</strong>
+  <%= @hotel.name %>
+</p>
+
+<p>
+  <strong>Rating:</strong>
+  <%= @hotel.rating %>
+</p>
+
+<p>
+  <strong>Review count:</strong>
+  <%= @hotel.review_count %>
+</p>
+
+<p>
+  <strong>Location:</strong>
+  <%= @hotel.location %>
+</p>
+
+<p>
+  <strong>Traveler Rating:</strong>
+  <%= @hotel.traveler_rating %>
+</p>
+
+<p>
+  <strong>Rating Summary:</strong>
+  <%= @hotel.rating_summary %>
+</p>
+
+
+<strong>Reviews:</strong>
+<ul>
+	<% @hotel.reviews.each do |review| %>
+	<li>
+		<p>
+		  <strong>Title:</strong>
+		  <%= review.title %>
+		  <br>
+		  <strong>Content:</strong>
+		  <%= review.content %>
+		</p>
+	</li>
+	<% end %>
+</ul>
+
+<%= link_to 'Edit', edit_hotel_path(@hotel) %> |
+<%= link_to 'Back', hotels_path %>

@@ -1,0 +1,32 @@
+<h1>Listing hotels</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Rating</th>
+      <th>Review count</th>
+      <th>Location</th>
+      <th colspan="4"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @hotels.each do |hotel| %>
+      <tr>
+        <td><%= hotel.name %></td>
+        <td><%= hotel.rating %></td>
+        <td><%= hotel.review_count %></td>
+        <td><%= hotel.location %></td>
+        <td><%= link_to 'Show', hotel %></td>
+        <td><%= link_to 'Reviews', reviews_path(hotel_id: hotel.id) %></td>
+        <td><%= link_to 'Edit', edit_hotel_path(hotel) %></td>
+        <td><%= link_to 'Destroy', hotel, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Hotel', new_hotel_path %>

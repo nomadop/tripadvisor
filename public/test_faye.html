@@ -1,0 +1,15 @@
+<html>
+	<head>
+		<title>test faye</title>
+		<script src="http://localhost:3001/assets/jquery.js?body=1"></script>
+		<script src="http://localhost:9292/faye.js"></script>
+		<script language="javascript">
+			$(function(){  
+			  var client = new Faye.Client('http://192.168.1.21:9292/faye');  
+			  client.subscribe("/messages/new",function(data){  
+			    console.log(data);  
+			  });  
+			});  
+		</script>
+	</head>
+</html>

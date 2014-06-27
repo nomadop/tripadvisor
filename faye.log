@@ -1,0 +1,18 @@
+ publish a message on channel '/messages/new': hollw
+server publish a message on channel '/messages/new': hollw
+client[i9oni34oyofqs1cvoynqeyy4m6keya8] connected.
+client[i9oni34oyofqs1cvoynqeyy4m6keya8] subscribed to channel '/messages/new'.
+[2014-06-20 17:18:16 +0800] client[c118vnkol5wfk27jbc1p208ek6zr99d] connected.
+[2014-06-20 17:18:17 +0800] client[c118vnkol5wfk27jbc1p208ek6zr99d] subscribed to channel '/messages/new'.
+[2014-06-20 17:18:19 +0800] client[c118vnkol5wfk27jbc1p208ek6zr99d] unsubscribed from channel '/messages/new'.
+[2014-06-20 17:18:19 +0800] client[c118vnkol5wfk27jbc1p208ek6zr99d] disconnected.
+[2014-06-20 17:18:19 +0800] client[p5l802o7s69ua7bc1x3dx10wwg565y9] connected.
+[2014-06-20 17:18:19 +0800] client[p5l802o7s69ua7bc1x3dx10wwg565y9] subscribed to channel '/messages/new'.
+[2014-06-20 17:18:21 +0800] server publish a message on channel '/messages/new': hollw.
+[2014-06-20 17:18:42 +0800] client[p5l802o7s69ua7bc1x3dx10wwg565y9] unsubscribed from channel '/messages/new'.
+[2014-06-20 17:18:42 +0800] client[p5l802o7s69ua7bc1x3dx10wwg565y9] disconnected.
+[2014-06-20 17:18:43 +0800] client[nxrotadb3ny0bgmg8fsl4znmw9ogjvr] connected.
+[2014-06-20 17:18:43 +0800] client[nxrotadb3ny0bgmg8fsl4znmw9ogjvr] subscribed to channel '/messages/new'.
+[2014-06-20 17:18:54 +0800] server publish a message on channel '/messages/new': hollw.
+[2014-06-20 17:18:55 +0800] server publish a message on channel '/messages/new': hollw.
+[2014-06-20 17:18:55 +0800] server publish a message on channel '/messages/new': hollw.

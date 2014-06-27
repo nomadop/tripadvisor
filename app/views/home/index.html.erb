@@ -1,0 +1,13 @@
+
+		<script language="javascript">
+			$(function(){  
+			  var client = new Faye.Client('http://localhost:9292/faye');  
+			  client.subscribe("/messages/new",function(data){  
+			    console.log(data);  
+			    $("#counter").html(parseInt($("#counter").html()) + 1);
+			  });  	
+			});  
+		</script>
+
+
+<span id="counter">0</span>

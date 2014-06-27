@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  rating: 1.5
+  review_count: 1
+  location: MyText
+
+two:
+  name: MyString
+  rating: 1.5
+  review_count: 1
+  location: MyText
