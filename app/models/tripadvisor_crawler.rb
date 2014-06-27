@@ -104,7 +104,7 @@ class TripadvisorCrawler
 			end
 			return hotel_info
 		rescue Faraday::TimeoutError => e
-			MyLogger.log "Timeout when Got hotel_info from #{url.split('/').last}, retry:"
+			MyLogger.log "Timeout when Got hotel_info from #{url.split('/').last}, retry:", 'WARNING'
 			get_hotel_info_by_hotelurl(url)
 		rescue Exception => e
 			p e
