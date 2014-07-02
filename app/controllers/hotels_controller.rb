@@ -5,6 +5,9 @@ class HotelsController < ApplicationController
   # GET /hotels.json
   def index
     @hotels = Hotel.all
+    if params[:city]
+      @hotels = @hotels.select { |h| h.location['City'] == params[:city] }
+    end
   end
 
   # GET /hotels/1

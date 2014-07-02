@@ -3,10 +3,14 @@
 <table>
   <thead>
     <tr>
+      <th>Tag</th>
       <th>Name</th>
+      <th>Stars</th>
       <th>Rating</th>
       <th>Review count</th>
       <th>Location</th>
+      <th>Format Address</th>
+      <th>Street Address</th>
       <th colspan="4"></th>
     </tr>
   </thead>
@@ -14,10 +18,14 @@
   <tbody>
     <% @hotels.each do |hotel| %>
       <tr>
+        <td><%= hotel.tag %></td>
         <td><%= hotel.name %></td>
+        <td><%= hotel.star_rating %></td>
         <td><%= hotel.rating %></td>
         <td><%= hotel.review_count %></td>
         <td><%= hotel.location %></td>
+        <td><%= hotel.format_address %></td>
+        <td><%= hotel.street_address %></td>
         <td><%= link_to 'Show', hotel %></td>
         <td><%= link_to 'Reviews', reviews_path(hotel_id: hotel.id) %></td>
         <td><%= link_to 'Edit', edit_hotel_path(hotel) %></td>
