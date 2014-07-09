@@ -14,21 +14,25 @@ class Youdao
 	end
 
 	def self.translate src_str
-		conn = get_conn
-		response = conn.post '/translate', {
-			type: 'AUTO',
-			i: src_str,
-			doctype: 'json',
-			xmlVersion: 1.6,
-			keyfrom: 'fanyi.web',
-			ue: 'UTF-8',
-			typoResult: true
-		}
-		result = JSON.parse(response.body)
-		if result['smartResult']
-			result['smartResult']['entries'].delete_if{|s| s.blank?}[0]
-		else
-			result['translateResult'][0][0]['tgt']
+		begin
+			conn = get_conn
+			response = conn.post '/translate', {
+				type: 'AUTO',
+				i: src_str,
+				doctype: 'json',
+				xmlVersion: 1.6,
+				keyfrom: 'fanyi.web',
+				ue: 'UTF-8',
+				typoResult: true
+			}
+			result = JSON.parse(response.body)
+			if result['smartResult']
+				result['smartResult']['entries'].delete_if{|s| s.blank?}[0]
+			else
+				result['translateResult'][0][0]['tgt']
+			end
+		rescue Faraday::TimeoutError => e
+			Youdao.translate(src_str)
 		end
 	end
 

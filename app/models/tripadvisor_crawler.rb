@@ -38,6 +38,7 @@ class TripadvisorCrawler
 			return nil unless response.status == 200
 			doc = Nokogiri::HTML(response.body)
 			hotel_info = {}
+			hotel_info[:source_id] = /d(\d+)/.match(url)[1].to_i
 			hotel_info[:name] = doc.css('h1#HEADING')[0].content.gsub(/\n/, '')
 			hotel_info[:rating] = doc.css('.userRating .rating img')[0]['content'].to_f / 5.0 * 100 if doc.css('.userRating .rating img').any?
 			hotel_info[:review_count] = doc.css('.userRating .rating a span')[0].content.to_i if doc.css('.userRating .rating a span').any?
@@ -54,6 +55,8 @@ class TripadvisorCrawler
 			hotel_info[:star_rating] = doc.css('.star .rate img')[0]['alt'].split(' ').first.to_f if doc.css('.star .rate img')[0]
 			hotel_info[:format_address] = doc.css('.format_address')[0].content.gsub(/\n/, '') if doc.css('.format_address')[0]
 			hotel_info[:street_address] = doc.css('.format_address .street-address')[0].content if doc.css('.format_address .street-address')[0]
+			latlng = GeocodingApi.get_latlng({street: hotel_info[:street_address], city: hotel_info[:location]['City'], country: hotel_info[:location]['Country']})
+			hotel_info[:location][:latlng] = latlng
 			hotel_info[:tag] = 'tripadvisor'
 			if hotel_info[:rating]
 				doc.css('.composite .wrap').each do |wrap|
@@ -73,6 +76,7 @@ class TripadvisorCrawler
 					count = 9
 				end
 				0.step(count, 10) do |p|
+					break if p == count
 					response = conn.get p == 0 ? url : url.split('-').insert(4, "or#{p}").join('-')
 					doc = Nokogiri::HTML(response.body)
 					review_ids = doc.css('.reviewSelector').map { |x| x['id'][7..-1].to_i }
@@ -149,6 +153,7 @@ class TripadvisorCrawler
 		count = doc.css("#INLINE_COUNT i")[0].content.to_i
 		MyLogger.log "Task start: got #{count} hotels"
 		30.step(count, 30) do |p|
+			break if p == count
 			response = conn.get url.split('-').insert(2, "oa#{p}").join('-')
 			doc = Nokogiri::HTML(response.body)
 			doc.css('#ACCOM_OVERVIEW .listing').each do |hotel|
@@ -173,6 +178,9 @@ class TripadvisorCrawler
 		end
 		tasks.each { |t| t.join }
 		return hotel_infos
+	rescue Faraday::TimeoutError => e
+		MyLogger.log "Timeout when Got hotel_infos from #{url.split('/').last}, retry:", 'WARNING'
+		get_hotel_infos_by_geourl(url, load_reviews)
 	end
 
 	def self.get_hotel_infos_by_gnum gnum
@@ -199,7 +207,48 @@ class TripadvisorCrawler
 		conn = get_conn
 		response = conn.post TripadvisorCrawler::QUERY_URL, query
 		result = JSON.parse(response.body)['results'].select{|r| r['title'] == 'Destinations'}[0]
-		get_hotel_infos_by_geourl(result['url'], load_reviews) if result
+		if result
+			get_hotel_infos_by_geourl(result['url'], load_reviews)
+		else
+			[]
+		end
+	end
+
+	def self.get_hotel_infos_by_country_name country_name, load_reviews = true
+		MyLogger.log "Task start: get_hotel_infos_by_country_name(#{country_name})"
+
+		query = {
+			action: 'API',
+			types: 'geo,dest',
+			hglt: true,
+			global: true,
+			link_type: 'hotel',
+			blenderPages: false,
+			scoreThreshold: 0.2,
+			startTime: Time.now.to_i * 1000,
+			uiOrigin: 'PTPT-dest',
+			query: country_name
+		}
+
+		conn = get_conn
+		response = conn.post TripadvisorCrawler::QUERY_URL, query
+		result = JSON.parse(response.body)['results'][0]
+		url = result['url']
+		response = conn.get(url)
+		doc = Nokogiri::HTML(response.body)
+		city_urls = doc.css('.geo_name a').map { |a| a['href'] }
+		count = doc.css('.pgCount')[0].content.split(' ').last.gsub(/\,/, '').to_i
+		20.step(count, 20) do |p|
+			break if p == count
+			response = conn.get url.split('-').insert(2, "oa#{p}").join('-')
+			doc = Nokogiri::HTML(response.body)
+			city_urls += doc.css('.geo_name a').map { |a| a['href'] }
+		end
+		city_urls.inject([]) do |hotel_infos, city_url|
+			hotel_infos += TripadvisorCrawler.get_hotel_infos_by_geourl(city_url, load_reviews)
+		end
+	rescue Faraday::TimeoutError => e
+		get_hotel_infos_by_country_name(country_name, load_reviews)
 	end
 
 end
