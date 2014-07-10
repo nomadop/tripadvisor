@@ -340,40 +340,30 @@ class Hotel < ActiveRecord::Base
 		end
 	end
 
-	def self.create_hotel_by_hotel_info_from_tripadvisor hotel_info
+	def self.update_or_create_hotel_by_hotel_info_from_tripadvisor hotel_info
 		hotel = Hotel.where(tag: 'tripadvisor', source_id: hotel_info[:source_id])[0]
+		hotel_info[:reviews] = Review.update_or_create(hotel_info[:reviews]) if hotel_info[:reviews]
 		if hotel
-			if hotel_info[:reviews]
-				hotel.reviews.destroy_all
-				hotel_info[:reviews] = Review.create(hotel_info[:reviews])
-			end
 			hotel.update(hotel_info)
 		else
-			hotel_info[:reviews] = Review.create(hotel_info[:reviews]) if hotel_info[:reviews]
 			Hotel.create(hotel_info)
 		end
 	end
 
-	def self.init_hotels_by_city_name_from_tripadvisor city_name
-		hotel_infos = TripadvisorCrawler.get_hotel_infos_by_city_name(city_name)
-		hotel_infos.each do |hotel_info|
-			hotel_info[:reviews] = Review.create(hotel_info[:reviews])
-		end
-		Hotel.create(hotel_infos)
-	end
-
-	def self.update_hotels_by_city_name_from_tripadvisor city_name, load_reviews
+	def self.update_or_create_hotels_by_city_name_from_tripadvisor city_name, load_reviews
+		File.open("log.txt", "w") { |file| file.puts "start mission: update_or_create_hotels_by_city_name_from_tripadvisor(#{city_name}, load_reviews)" }
 		hotel_infos = TripadvisorCrawler.get_hotel_infos_by_city_name(city_name, load_reviews)
 		hotel_infos.each do |hotel_info|
-			create_hotel_by_hotel_info_from_tripadvisor(hotel_info)
+			update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info)
 		end
 	end
 
-	def self.update_hotels_by_country_name_from_tripadvisor country_name, load_reviews
+	def self.update_or_create_hotels_by_country_name_from_tripadvisor country_name, load_reviews
+		File.open("log.txt", "w") { |file| file.puts "start mission: update_or_create_hotels_by_country_name_from_tripadvisor(#{country_name}, load_reviews)" }
 		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name)
 		city_urls.each do |city_url|
 			hotel_infos = TripadvisorCrawler.get_hotel_infos_by_geourl(city_url, load_reviews)
-			hotel_infos.each { |hotel_info| create_hotel_by_hotel_info_from_tripadvisor(hotel_info) }
+			hotel_infos.each { |hotel_info| update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info) }
 		end
 	end
 

@@ -36,14 +36,17 @@ class TripadvisorCrawler
 		}
 		doc = Nokogiri::HTML(response.body)
 		regex = /([\u4e00-\u9fa5]*)/
+		hira_reg = /([ぁ-ん]*)/
 		reviews = doc.css('.extended').inject([]) do |result, r|
 			begin
 				unless regex.match(r.css(".innerBubble a")[0].content[1...-1].gsub(/\w|\d/, ''))[1].blank?
-					result << {
-						review_id: r['id'][2..-1].to_i,
-						title: r.css(".innerBubble a")[0].content[1...-1],
-						content: r.css('.entry')[0].content.gsub(/\n/, '')
-					}
+					if r.css(".innerBubble a")[0].content.scan(hira_reg).delete_if{|x| x[0].blank?}.empty?
+						result << {
+							review_id: r['id'][2..-1].to_i,
+							title: r.css(".innerBubble a")[0].content[1...-1],
+							content: r.css('.entry')[0].content.gsub(/\n/, '')
+						}
+					end
 				end
 			rescue Exception => e
 				p e
@@ -202,6 +205,7 @@ class TripadvisorCrawler
 				hotel_urls << TripadvisorCrawler::URL + hotel.css('.quality a:first')[0]['href']
 			end
 		end
+		hotel_urls.each { |url| MyLogger.log "    #{url}" }
 		tasks = []
     mutex = Mutex.new
 		hotel_urls.each do |url|
