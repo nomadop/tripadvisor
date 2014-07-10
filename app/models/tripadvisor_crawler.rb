@@ -18,7 +18,42 @@ class TripadvisorCrawler
 	end
 
 	def self.get_hotel_reviews_by_hotelurl url, conn
-		
+		response = conn.get(url)
+		doc = Nokogiri::HTML(response.body)
+		review_ids = doc.css('.reviewSelector').map { |x| x['id'][7..-1].to_i }
+		conn.params = {
+			target: review_ids[0],
+			context: 0,
+			reviews: review_ids.join(','),
+			servlet: 'Hotel_Review',
+			expand: 1
+		}
+		response = conn.post "/ExpandedUserReviews-#{url.match(/g\d+/)[0]}-#{url.match(/d\d+/)[0]}", {
+			gac: 'Reviews',
+			gaa: 'expand',
+			gass: 'Hotel_Review',
+			gasl: url.match(/d\d+/)[0][1..-1].to_i
+		}
+		doc = Nokogiri::HTML(response.body)
+		regex = /([\u4e00-\u9fa5]*)/
+		reviews = doc.css('.extended').inject([]) do |result, r|
+			begin
+				unless regex.match(r.css(".innerBubble a")[0].content[1...-1].gsub(/\w|\d/, ''))[1].blank?
+					result << {
+						review_id: r['id'][2..-1].to_i,
+						title: r.css(".innerBubble a")[0].content[1...-1],
+						content: r.css('.entry')[0].content.gsub(/\n/, '')
+					}
+				end
+			rescue Exception => e
+				p e
+				MyLogger.log "Got review failed at #{url}! Error: #{e.inspect}"
+			end
+			result
+		end
+	rescue Faraday::TimeoutError => e
+		MyLogger.log "Timeout when Got hotel_reviews from #{url.split('/').last}, retry:", 'WARNING'
+		get_hotel_reviews_by_hotelurl(url, conn)
 	end
 
 	def self.get_hotel_info_by_hotelurl url, load_reviews, lang = 'zhCN'
@@ -55,8 +90,13 @@ class TripadvisorCrawler
 			hotel_info[:star_rating] = doc.css('.star .rate img')[0]['alt'].split(' ').first.to_f if doc.css('.star .rate img')[0]
 			hotel_info[:format_address] = doc.css('.format_address')[0].content.gsub(/\n/, '') if doc.css('.format_address')[0]
 			hotel_info[:street_address] = doc.css('.format_address .street-address')[0].content if doc.css('.format_address .street-address')[0]
-			latlng = GeocodingApi.get_latlng({street: hotel_info[:street_address], city: hotel_info[:location]['City'], country: hotel_info[:location]['Country']})
-			hotel_info[:location][:latlng] = latlng
+			if doc.css('script').to_s.scan(/[lat|lng]: (\d+\.\d+)/).size == 2
+				coord = doc.css('script').to_s.scan(/[lat|lng]: (\d+\.\d+)/)
+				latlng = [{'lat' => coord[0][0].to_f, 'lng' => coord[1][0].to_f}]
+			else
+				latlng = GeocodingApi.get_latlng({street: hotel_info[:street_address], city: hotel_info[:location]['City'], country: hotel_info[:location]['Country']})
+			end
+			hotel_info[:location]['latlng'] = latlng
 			hotel_info[:tag] = 'tripadvisor'
 			if hotel_info[:rating]
 				doc.css('.composite .wrap').each do |wrap|
@@ -77,39 +117,41 @@ class TripadvisorCrawler
 				end
 				0.step(count, 10) do |p|
 					break if p == count
-					response = conn.get p == 0 ? url : url.split('-').insert(4, "or#{p}").join('-')
-					doc = Nokogiri::HTML(response.body)
-					review_ids = doc.css('.reviewSelector').map { |x| x['id'][7..-1].to_i }
-					conn.params = {
-						target: review_ids[0],
-						context: 0,
-						reviews: review_ids.join(','),
-						servlet: 'Hotel_Review',
-						expand: 1
-					}
-					response = conn.post "/ExpandedUserReviews-#{url.match(/g\d+/)[0]}-#{url.match(/d\d+/)[0]}", {
-						gac: 'Reviews',
-						gaa: 'expand',
-						gass: 'Hotel_Review',
-						gasl: url.match(/d\d+/)[0][1..-1].to_i
-					}
-					doc = Nokogiri::HTML(response.body)
-					regex = /([\u4e00-\u9fa5]*)/
-					reviews = doc.css('.extended').inject([]) do |result, r|
-						begin
-							unless regex.match(r.css(".innerBubble a")[0].content[1...-1].gsub(/\w|\d/, ''))[1].blank?
-								result << {
-									review_id: r['id'][2..-1].to_i,
-									title: r.css(".innerBubble a")[0].content[1...-1],
-									content: r.css('.entry')[0].content.gsub(/\n/, '')
-								}
-							end
-						rescue Exception => e
-							p e
-							MyLogger.log "Got review failed at #{url}#page:#{p}! Error: #{e.inspect}"
-						end
-						result
-					end
+					hotel_paginated_url = p == 0 ? url : url.split('-').insert(4, "or#{p}").join('-')
+					reviews = get_hotel_reviews_by_hotelurl(hotel_paginated_url, conn)
+					# response = conn.get p == 0 ? url : url.split('-').insert(4, "or#{p}").join('-')
+					# doc = Nokogiri::HTML(response.body)
+					# review_ids = doc.css('.reviewSelector').map { |x| x['id'][7..-1].to_i }
+					# conn.params = {
+					# 	target: review_ids[0],
+					# 	context: 0,
+					# 	reviews: review_ids.join(','),
+					# 	servlet: 'Hotel_Review',
+					# 	expand: 1
+					# }
+					# response = conn.post "/ExpandedUserReviews-#{url.match(/g\d+/)[0]}-#{url.match(/d\d+/)[0]}", {
+					# 	gac: 'Reviews',
+					# 	gaa: 'expand',
+					# 	gass: 'Hotel_Review',
+					# 	gasl: url.match(/d\d+/)[0][1..-1].to_i
+					# }
+					# doc = Nokogiri::HTML(response.body)
+					# regex = /([\u4e00-\u9fa5]*)/
+					# reviews = doc.css('.extended').inject([]) do |result, r|
+					# 	begin
+					# 		unless regex.match(r.css(".innerBubble a")[0].content[1...-1].gsub(/\w|\d/, ''))[1].blank?
+					# 			result << {
+					# 				review_id: r['id'][2..-1].to_i,
+					# 				title: r.css(".innerBubble a")[0].content[1...-1],
+					# 				content: r.css('.entry')[0].content.gsub(/\n/, '')
+					# 			}
+					# 		end
+					# 	rescue Exception => e
+					# 		p e
+					# 		MyLogger.log "Got review failed at #{url}#page:#{p}! Error: #{e.inspect}"
+					# 	end
+					# 	result
+					# end
 					if reviews.any?
 						hotel_info[:reviews] += reviews
 					else
@@ -214,7 +256,7 @@ class TripadvisorCrawler
 		end
 	end
 
-	def self.get_hotel_infos_by_country_name country_name, load_reviews = true
+	def self.get_city_urls_by_country_name country_name, load_reviews = true
 		MyLogger.log "Task start: get_hotel_infos_by_country_name(#{country_name})"
 
 		query = {
@@ -244,11 +286,12 @@ class TripadvisorCrawler
 			doc = Nokogiri::HTML(response.body)
 			city_urls += doc.css('.geo_name a').map { |a| a['href'] }
 		end
-		city_urls.inject([]) do |hotel_infos, city_url|
-			hotel_infos += TripadvisorCrawler.get_hotel_infos_by_geourl(city_url, load_reviews)
-		end
+		# city_urls.inject([]) do |hotel_infos, city_url|
+		# 	hotel_infos += TripadvisorCrawler.get_hotel_infos_by_geourl(city_url, load_reviews)
+		# end
+		city_urls
 	rescue Faraday::TimeoutError => e
-		get_hotel_infos_by_country_name(country_name, load_reviews)
+		get_city_urls_by_country_name(country_name, load_reviews)
 	end
 
 end

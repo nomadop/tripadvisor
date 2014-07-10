@@ -26,11 +26,11 @@ class Hotel < ActiveRecord::Base
 		end
 		simi_table[0...10].map do |x|
 			hotelB = x[0]
-			if hotelB.location[:latlng]
-				latlngs = hotelB.location[:latlng]
+			if hotelB.location['latlng']
+				latlngs = hotelB.location['latlng']
 			else
 				latlngs = GeocodingApi.get_latlng({street: hotelB.street_address, city: hotelB.location['City'], country: hotelB.location['Country']})
-				hotelB.location[:latlng] = latlngs
+				hotelB.location['latlng'] = latlngs
 				hotelB.save
 			end
 			distances = latlngs.map do |latlng|
@@ -76,7 +76,7 @@ class Hotel < ActiveRecord::Base
 		n_table = hotelsB.map(&:id)
 		n = n_table.size
 		m_n_table = m_table.map do |m|
-			n_table.map { |n| (simi_table[m][n] * 100).to_i }
+			n_table.map { |n| (simi_table[m][n] * 100).round(0) }
 		end
 		for i in (0...m) do
 			l1[i] = -inf
@@ -164,6 +164,7 @@ class Hotel < ActiveRecord::Base
 	end
 
 	def self.get_similarity_table hotelsA, hotelsB
+		File.open("similarity.log", "w") { |file| file.puts "start:" }
 		hotelsA.inject([]) do |simi_table, hotelA|
 			max_simi = 0
 			most_simi_hotel = nil
@@ -181,6 +182,7 @@ class Hotel < ActiveRecord::Base
 				file.puts "the most hotel similar to (#{hotelA.name}) is (#{most_simi_hotel.name}), similarity is #{max_simi}"
 				file.puts "    #{hotelA.name}: #{hotelA.format_address.blank? ? hotelA.street_address : hotelA.format_address}"
 				file.puts "    #{most_simi_hotel.name}: #{hotelA.format_address.blank? ? most_simi_hotel.street_address : most_simi_hotel.format_address}"
+				file.puts "    distance is #{GeocodingApi.get_distance(hotelA.location['lat'].to_f, hotelA.location['lng'].to_f, most_simi_hotel.location['latlng'][0]['lat'], most_simi_hotel.location['latlng'][0]['lng'])}"
 				file.puts '=' * 100
 			end
 			simi_table.map do |x|
@@ -211,18 +213,27 @@ class Hotel < ActiveRecord::Base
 			similarity += levenshtein(hotelA.format_address, hotelB.format_address) * 0.3
 		end
 		if with_distance == true
-			if hotelB.location[:latlng]
-				latlngs = hotelB.location[:latlng]
+			if hotelB.location['latlng']
+				latlngs = hotelB.location['latlng']
 			else
 				latlngs = GeocodingApi.get_latlng({street: hotelB.street_address, city: hotelB.location['City'], country: hotelB.location['Country']})
-				hotelB.location[:latlng] = latlngs
+				hotelB.location['latlng'] = latlngs
 				hotelB.save
 			end
 			distances = latlngs.map do |latlng|
 				GeocodingApi.get_distance(hotelA.location['lat'].to_f, hotelA.location['lng'].to_f, latlng['lat'].to_f, latlng['lng'].to_f)
 			end
-			puts "min_distance between (#{hotelA.name}) and (#{hotelB.name}) is #{distances.min}"
-			similarity += 100.0 / distances.min
+			# puts "min_distance between (#{hotelA.name}) and (#{hotelB.name}) is #{distances.min}"
+			case distances.min
+			when 0...100
+				similarity += 1
+			when 100...300
+				similarity += 0.7
+			when 300...500
+				similarity += 0.5
+			when 500...1000
+				similarity += 0.3
+			end
 		end
 		#puts "similarity between (#{hotelA.name}) and (#{hotelB.name}) is #{similarity}"
 		return similarity
@@ -242,7 +253,7 @@ class Hotel < ActiveRecord::Base
 				j += 1
 				left = domic[i][j - 1] + 1.0
 				up = domic[i - 1][j] + 1.0
-				up_left = domic[i - 1][j - 1] + ( c1 == c2 ? 0.0 : weight )
+				up_left = domic[i - 1][j - 1] + ( c1.downcase == c2.downcase ? 0.0 : weight )
 				domic[i][j] = [left, up, up_left].min
 			end
 		end
@@ -329,6 +340,20 @@ class Hotel < ActiveRecord::Base
 		end
 	end
 
+	def self.create_hotel_by_hotel_info_from_tripadvisor hotel_info
+		hotel = Hotel.where(tag: 'tripadvisor', source_id: hotel_info[:source_id])[0]
+		if hotel
+			if hotel_info[:reviews]
+				hotel.reviews.destroy_all
+				hotel_info[:reviews] = Review.create(hotel_info[:reviews])
+			end
+			hotel.update(hotel_info)
+		else
+			hotel_info[:reviews] = Review.create(hotel_info[:reviews]) if hotel_info[:reviews]
+			Hotel.create(hotel_info)
+		end
+	end
+
 	def self.init_hotels_by_city_name_from_tripadvisor city_name
 		hotel_infos = TripadvisorCrawler.get_hotel_infos_by_city_name(city_name)
 		hotel_infos.each do |hotel_info|
@@ -340,19 +365,15 @@ class Hotel < ActiveRecord::Base
 	def self.update_hotels_by_city_name_from_tripadvisor city_name, load_reviews
 		hotel_infos = TripadvisorCrawler.get_hotel_infos_by_city_name(city_name, load_reviews)
 		hotel_infos.each do |hotel_info|
-			hotel = Hotel.where(tag: 'tripadvisor', source_id: hotel_info[:source_id])[0]
-			if hotel
-				if load_reviews == true
-					hotel.reviews.destroy_all
-					hotel_info[:reviews] = Review.create(hotel_info[:reviews])
-				end
-				hotel.update(hotel_info)
-			else
-				if load_reviews == true
-					hotel_info[:reviews] = Review.create(hotel_info[:reviews])
-				end
-				Hotel.create(hotel_info)
-			end
+			create_hotel_by_hotel_info_from_tripadvisor(hotel_info)
+		end
+	end
+
+	def self.update_hotels_by_country_name_from_tripadvisor country_name, load_reviews
+		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name)
+		city_urls.each do |city_url|
+			hotel_infos = TripadvisorCrawler.get_hotel_infos_by_geourl(city_url, load_reviews)
+			hotel_infos.each { |hotel_info| create_hotel_by_hotel_info_from_tripadvisor(hotel_info) }
 		end
 	end
 

@@ -47,3 +47,5 @@ gem 'faraday'
 gem 'faye'
 
 gem 'thin'
+
+gem 'will_paginate'
