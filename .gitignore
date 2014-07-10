@@ -4,3 +4,5 @@ km_result.txt
 log.txt
 
 *.log
+
+*.sqlite3
