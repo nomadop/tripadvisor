@@ -6,8 +6,9 @@ class Review < ActiveRecord::Base
 		if review
 			review.update(review_info)
 		else
-			Review.create(review_info)
+			review = Review.create(review_info)
 		end
+		return review
 	end
 
 	def self.update_or_create args

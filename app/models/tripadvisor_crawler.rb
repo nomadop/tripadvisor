@@ -40,7 +40,7 @@ class TripadvisorCrawler
 		reviews = doc.css('.extended').inject([]) do |result, r|
 			begin
 				unless regex.match(r.css(".innerBubble a")[0].content[1...-1].gsub(/\w|\d/, ''))[1].blank?
-					if r.css(".innerBubble a")[0].content.scan(hira_reg).delete_if{|x| x[0].blank?}.empty?
+					if r.css('.entry')[0].content.scan(hira_reg).delete_if{|x| x[0].blank?}.empty?
 						result << {
 							review_id: r['id'][2..-1].to_i,
 							title: r.css(".innerBubble a")[0].content[1...-1],

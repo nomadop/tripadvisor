@@ -6,11 +6,10 @@ class HotelsController < ApplicationController
   def index
     params[:page] ||= 1
     params[:per_page] ||= 20
-    @hotels = Hotel.limit(params[:per_page]).offset((params[:page].to_i - 1) * params[:per_page].to_i)
+    @hotels = Hotel.includes(:reviews).limit(params[:per_page]).offset((params[:page].to_i - 1) * params[:per_page].to_i)
     if params[:city]
       @hotels = @hotels.select { |h| h.location['City'] == params[:city] }
     end
-    @hotels
   end
 
   # GET /hotels/1

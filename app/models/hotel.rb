@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 class Hotel < ActiveRecord::Base
-	# before_create :validates_unique
+	before_create :validates_unique
 	after_initialize :init_location
 
 	serialize :location, Hash
@@ -17,27 +17,19 @@ class Hotel < ActiveRecord::Base
 
 	def match_hotels_from_other_tag hotels
 		simi_table = hotels.inject([]) do |table, hotel|
-			simi = Hotel.similarity(self, hotel, false)
+			simi = Hotel.similarity(self, hotel)
 			i = 0
 			for i in (0..table.size) do
 				break if table[i] && table[i][1] < simi
 			end
 			table.insert(i, [hotel, simi])
 		end
-		simi_table[0...10].map do |x|
-			hotelB = x[0]
-			if hotelB.location['latlng']
-				latlngs = hotelB.location['latlng']
-			else
-				latlngs = GeocodingApi.get_latlng({street: hotelB.street_address, city: hotelB.location['City'], country: hotelB.location['Country']})
-				hotelB.location['latlng'] = latlngs
-				hotelB.save
-			end
-			distances = latlngs.map do |latlng|
-				GeocodingApi.get_distance(self.location['lat'].to_f, self.location['lng'].to_f, latlng['lat'].to_f, latlng['lng'].to_f)
-			end
-			puts "min_distance between (#{self.name}) and (#{hotelB.name}) is #{distances.min}"
-			distances.min
+		File.open("similarity.log", "a+") do |file|
+			file.puts "the most hotel similar to (#{self.name}) is (#{simi_table[0][0].name}), similarity is #{simi_table[0][1]}"
+			file.puts "    #{self.name}: #{self.format_address.blank? ? self.street_address : self.format_address}"
+			file.puts "    #{simi_table[0][0].name}: #{self.format_address.blank? ? simi_table[0][0].street_address : simi_table[0][0].format_address}"
+			file.puts "    distance is #{GeocodingApi.get_distance(self.location['lat'].to_f, self.location['lng'].to_f, simi_table[0][0].location['latlng'][0]['lat'], simi_table[0][0].location['latlng'][0]['lng'])}"
+			file.puts '=' * 100
 		end
 	end
 
@@ -49,7 +41,12 @@ class Hotel < ActiveRecord::Base
 			hotelsA = Hotel.where(tag: 'asiatravel')
 			hotelsB = Hotel.where(tag: 'tripadvisor')
 		end
-		self.kuhn_munkres(hotelsA, hotelsB)
+		File.open("similarity.log", "w") { |file| file.puts "start:" }
+		hotelsA.each do |hotelA|
+			hotelA.match_hotels_from_other_tag(hotelsB)
+		end
+		# self.kuhn_munkres(hotelsA, hotelsB)
+		true
 	end
 
 	def get_similarity_table_of hotels
@@ -341,7 +338,7 @@ class Hotel < ActiveRecord::Base
 	end
 
 	def self.update_or_create_hotel_by_hotel_info_from_tripadvisor hotel_info
-		hotel = Hotel.where(tag: 'tripadvisor', source_id: hotel_info[:source_id])[0]
+		hotel = Hotel.where(tag: hotel_info[:tag], source_id: hotel_info[:source_id])[0]
 		hotel_info[:reviews] = Review.update_or_create(hotel_info[:reviews]) if hotel_info[:reviews]
 		if hotel
 			hotel.update(hotel_info)
