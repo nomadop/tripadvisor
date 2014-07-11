@@ -184,7 +184,7 @@ class TripadvisorCrawler
 		get_hotel_info_by_hotelurl(location)
 	end
 
-	def self.get_hotel_infos_by_geourl url, load_reviews = true
+	def self.get_hotel_infos_by_geourl url, load_reviews = true, *args
 		MyLogger.log "Task start: get_hotel_infos_by_geourl(#{url.split('/').last})"
 
 		conn = get_conn
@@ -196,7 +196,10 @@ class TripadvisorCrawler
 			hotel_urls << TripadvisorCrawler::URL + hotel.css('.quality a:first')[0]['href']
 		end
 		count = doc.css("#INLINE_COUNT i")[0].content.to_i
-		MyLogger.log "Task start: got #{count} hotels"
+		MyLogger.log "    got #{count} hotels"
+		if args[0] && args[0][:only_count] == true
+			return count
+		end
 		30.step(count, 30) do |p|
 			break if p == count
 			response = conn.get url.split('-').insert(2, "oa#{p}").join('-')
@@ -206,6 +209,9 @@ class TripadvisorCrawler
 			end
 		end
 		hotel_urls.each { |url| MyLogger.log "    #{url}" }
+		if args[0] && args[0][:only_id] == true
+			return hotel_urls.map { |url| /d(\d+)/.match(url)[1].to_i }
+		end
 		tasks = []
     mutex = Mutex.new
 		hotel_urls.each do |url|
@@ -260,7 +266,21 @@ class TripadvisorCrawler
 		end
 	end
 
-	def self.get_city_urls_by_country_name country_name, load_reviews = true
+	def self.get_hotel_count_by_country_name country_name
+		city_urls = get_city_urls_by_country_name(country_name)
+		city_urls.inject(0) do |count, city_url|
+			count += get_hotel_infos_by_geourl(city_url, false, only_count: true)
+		end
+	end
+
+	def self.get_hotel_ids_by_country_name country_name
+		city_urls = get_city_urls_by_country_name(country_name)
+		city_urls.inject([]) do |ids, city_url|
+			ids += get_hotel_infos_by_geourl(city_url, false, only_id: true)
+		end
+	end
+
+	def self.get_city_urls_by_country_name country_name
 		MyLogger.log "Task start: get_hotel_infos_by_country_name(#{country_name})"
 
 		query = {
@@ -295,7 +315,7 @@ class TripadvisorCrawler
 		# end
 		city_urls
 	rescue Faraday::TimeoutError => e
-		get_city_urls_by_country_name(country_name, load_reviews)
+		get_city_urls_by_country_name(country_name)
 	end
 
 end

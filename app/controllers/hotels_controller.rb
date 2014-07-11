@@ -5,8 +5,8 @@ class HotelsController < ApplicationController
   # GET /hotels.json
   def index
     params[:page] ||= 1
-    params[:per_page] ||= 20
-    @hotels = Hotel.includes(:reviews).limit(params[:per_page]).offset((params[:page].to_i - 1) * params[:per_page].to_i)
+    params[:per_page] ||= 100
+    @hotels = Hotel.includes(:reviews).page(params[:page]).per(params[:per_page])
     if params[:city]
       @hotels = @hotels.select { |h| h.location['City'] == params[:city] }
     end

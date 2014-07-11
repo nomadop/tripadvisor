@@ -9,41 +9,94 @@ class Hotel < ActiveRecord::Base
 	serialize :rating_summary, Hash
 	scope :city, ->(city_name){ where("location like ?", "%#{city_name}%") }
 	has_many :reviews, dependent: :destroy
-	has_one :matched_hotel, class_name: 'Hotel'
+
+	def self.post_hotel_score_cache_to_senscape hotel, conn
+		response = conn.get '/hotel_score_caches/new'
+		conn.headers['cookie'] = response.headers['set-cookie']
+		doc = Nokogiri::HTML(response.body)
+		authenticity_token = doc.css("[name='authenticity_token']")[0]['value']
+		matched_hotel = Hotel.find(hotel.hotel_id)
+		response = conn.post '/hotel_score_caches', {
+			'authenticity_token' => authenticity_token,
+			'hotel_score_cache[hotel_code]' => hotel.source_id,
+			'hotel_score_cache[hotel_name]' => hotel.name,
+			'hotel_score_cache[rating]' => matched_hotel.rating,
+			'hotel_score_cache[review_count]' => matched_hotel.review_count,
+			'hotel_score_cache[traveler_rating]' => matched_hotel.traveler_rating,
+			'hotel_score_cache[rating_summary]' => matched_hotel.rating_summary
+		}		
+	rescue Faraday::TimeoutError => e
+		post_hotel_score_cache_to_senscape(hotel, conn)
+	end
+
+	def self.post_hotel_score_caches_to_senscape
+		conn = Conn.init('http://asia.senscape.com.cn')
+		response = conn.get '/users/login'
+		conn.headers['cookie'] = response.headers['set-cookie']
+		doc = Nokogiri::HTML(response.body)
+		authenticity_token = doc.css("[name='authenticity_token']")[0]['value']
+		response = conn.post '/users/check_password', {
+			utf8: '✓',
+			authenticity_token: authenticity_token,
+			email: 'nomadop@gmail.com',
+			pwd: '366534743'
+		}
+		conn.headers['cookie'] = response.headers['set-cookie']
+		Hotel.where(tag: 'asiatravel').where.not(hotel_id: nil).each do |hotel|
+			post_hotel_score_cache_to_senscape(hotel, conn)
+		end
+	end
 
 	def address
 		self.format_address.blank? ? self.street_address : self.format_address
 	end
 
-	def match_hotels_from_other_tag hotels
+	def match_hotels_from_other_tag hotels, *args
 		simi_table = hotels.inject([]) do |table, hotel|
-			simi = Hotel.similarity(self, hotel)
+			if args[0] && args[0][:no_dist] == false
+				simi = Hotel.similarity(self, hotel, false)
+			else
+				simi = Hotel.similarity(self, hotel)
+			end
 			i = 0
 			for i in (0..table.size) do
 				break if table[i] && table[i][1] < simi
 			end
 			table.insert(i, [hotel, simi])
 		end
-		File.open("similarity.log", "a+") do |file|
-			file.puts "the most hotel similar to (#{self.name}) is (#{simi_table[0][0].name}), similarity is #{simi_table[0][1]}"
-			file.puts "    #{self.name}: #{self.format_address.blank? ? self.street_address : self.format_address}"
-			file.puts "    #{simi_table[0][0].name}: #{self.format_address.blank? ? simi_table[0][0].street_address : simi_table[0][0].format_address}"
-			file.puts "    distance is #{GeocodingApi.get_distance(self.location['lat'].to_f, self.location['lng'].to_f, simi_table[0][0].location['latlng'][0]['lat'], simi_table[0][0].location['latlng'][0]['lng'])}"
-			file.puts '=' * 100
-		end
+		self.hotel_id = simi_table[0][0].id
+		self.save
+		return simi_table[0]
+		# File.open("similarity.log", "a+") do |file|
+		# 	file.puts "the most hotel similar to (#{self.name}) is (#{simi_table[0][0].name}), similarity is #{simi_table[0][1]}"
+		# 	file.puts "    #{self.name}: #{self.format_address.blank? ? self.street_address : self.format_address}"
+		# 	file.puts "    #{simi_table[0][0].name}: #{self.format_address.blank? ? simi_table[0][0].street_address : simi_table[0][0].format_address}"
+		# 	file.puts "    distance is #{GeocodingApi.get_distance(self.location['lat'].to_f, self.location['lng'].to_f, simi_table[0][0].location['latlng'][0]['lat'], simi_table[0][0].location['latlng'][0]['lng'])}"
+		# 	file.puts '=' * 100
+		# end
 	end
 
-	def self.match_hotels_between_tripadvisor_and_asiatravel city_name = nil
-		if city_name
-			hotelsA = Hotel.where(tag: 'asiatravel').city(city_name).any? ? Hotel.where(tag: 'asiatravel').city(city_name) : Hotel.init_hotels_from_asiatravel(city_name)
-			hotelsB = Hotel.where(tag: 'tripadvisor').city(city_name).any? ? Hotel.where(tag: 'tripadvisor').city(city_name) : Hotel.init_hotels_from_tripadvisor(city_name)
-		else
-			hotelsA = Hotel.where(tag: 'asiatravel')
-			hotelsB = Hotel.where(tag: 'tripadvisor')
-		end
-		File.open("similarity.log", "w") { |file| file.puts "start:" }
+	def self.match_hotels_between_tripadvisor_and_asiatravel_by_country country_name, *args
+		hotels_from_asiatravel = Hotel.where(tag: 'asiatravel').city(country_name)
+		citys = hotels_from_asiatravel.map{ |hotel| hotel.location['City'] }.uniq
+		citys.each { |city| match_hotels_between_tripadvisor_and_asiatravel_by_city(city, *args) }
+	end
+
+	def self.match_hotels_between_tripadvisor_and_asiatravel_by_city city_name, *args
+		hotelsA = Hotel.where(tag: 'asiatravel').city(city_name)
+		hotelsB = Hotel.where(tag: 'tripadvisor').city(city_name)
+		# File.open("similarity.log", "w") { |file| file.puts "start:" }
 		hotelsA.each do |hotelA|
-			hotelA.match_hotels_from_other_tag(hotelsB)
+			result = hotelA.match_hotels_from_other_tag(hotelsB, *args)
+			matched_hotel = result[0]
+			similarity = result[1]
+			File.open("similarity.log", "a+") do |file|
+				file.puts "the most hotel similar to (#{hotelA.name}) is (#{matched_hotel.name}), similarity is #{similarity}"
+				file.puts "    #{hotelA.name}: #{hotelA.format_address.blank? ? hotelA.street_address : hotelA.format_address}"
+				file.puts "    #{matched_hotel.name}: #{hotelA.format_address.blank? ? matched_hotel.street_address : matched_hotel.format_address}"
+				file.puts "    distance is #{GeocodingApi.get_distance(hotelA.location['lat'].to_f, hotelA.location['lng'].to_f, matched_hotel.location['latlng'][0]['lat'], matched_hotel.location['latlng'][0]['lng'])}"
+				file.puts '=' * 100
+			end
 		end
 		# self.kuhn_munkres(hotelsA, hotelsB)
 		true
@@ -190,7 +243,7 @@ class Hotel < ActiveRecord::Base
 
 	def self.similarity hotelA, hotelB, with_distance = true
 		similarity = 0
-		num_regexp = /\b(\d+)\b/
+		num_regexp = /\b(\d+[\-\d+]?*)\b/
 		if hotelA.format_address.blank?
 			a_nums = hotelA.street_address.scan(num_regexp).map { |a| a[0] }
 			b_nums = hotelB.street_address.scan(num_regexp).map { |a| a[0] }
@@ -260,7 +313,7 @@ class Hotel < ActiveRecord::Base
 	def self.create_hotel_by_hotel_info_from_asiatravel hotel_info
 		regex = /([\u4e00-\u9fa5]*)/
 		name = ''
-		in_quotes = /[\（|\(](.*)[\）|\)]/.match(hotel_info['name'])
+		in_quotes = /[\（|\(](.*)[\）|\)]/.match(hotel_info['hotel_name'])
 		in_quotes = in_quotes[1] if in_quotes
 		if !in_quotes.blank?
 			if in_quotes.scan(regex).select{|a| !a[0].blank?}.empty?
@@ -269,36 +322,46 @@ class Hotel < ActiveRecord::Base
 				name = Youdao.translate(in_quotes)
 			end
 		else
-			name = hotel_info['name']
+			name = hotel_info['hotel_name']
 			name = name.gsub(/\w|\d|\ /, '').scan(regex).select{|a| !a[0].blank?}.empty? ? name : Youdao.translate(name)
 		end
-		source_id = /\b(\d+)\b/.match(hotel_info['url'])[1].to_i
+		source_id = hotel_info['hotel_code']
 		hotel = Hotel.where(tag: 'asiatravel', source_id: source_id)[0]
 		if hotel
 			hotel.update(
 				name: name,
-				star_rating: hotel_info['star_rating_name'].to_f,
+				# star_rating: hotel_info['star_rating_name'].to_f,
 				location: { 
+					'Country' => hotel_info['country_name'],
 					'City' => hotel_info['city_name'],
-					'lat' => hotel_info['lat'],
-					'lng' => hotel_info['lon']
+					'latlng' => [{
+						'lat' => hotel_info['latitude'],
+						'lng' => hotel_info['longitude']
+						}],
+					'lat' => hotel_info['latitude'],
+					'lng' => hotel_info['longitude']
 					},
-				format_address: regex.match(hotel_info['address'].gsub(/\w|\d/, ''))[1].blank? ? hotel_info['address'] : nil,
-				street_address: regex.match(hotel_info['address'].gsub(/\w|\d/, ''))[1].blank? ? nil : Youdao.translate(hotel_info['address']),
+				format_address: regex.match(hotel_info['hotel_address'].gsub(/\w|\d/, ''))[1].blank? ? hotel_info['hotel_address'] : nil,
+				street_address: regex.match(hotel_info['hotel_address'].gsub(/\w|\d/, ''))[1].blank? ? nil : Youdao.translate(hotel_info['hotel_address']),
 				tag: 'asiatravel'
 				)
 		else
 			Hotel.create(
 				source_id: source_id,
 				name: name,
-				star_rating: hotel_info['star_rating_name'].to_f,
+				# star_rating: hotel_info['star_rating_name'].to_f,
 				location: { 
+					'Country' => hotel_info['country_name'],
 					'City' => hotel_info['city_name'],
-					'lat' => hotel_info['lat'],
-					'lng' => hotel_info['lon']
+					'latlng' => [{
+						'lat' => hotel_info['latitude'],
+						'lng' => hotel_info['longitude']
+						}],
+					'lat' => hotel_info['latitude'],
+					'lng' => hotel_info['longitude']
 					},
-				format_address: regex.match(hotel_info['address'].gsub(/\w|\d/, ''))[1].blank? ? hotel_info['address'] : nil,
-				street_address: regex.match(hotel_info['address'].gsub(/\w|\d/, ''))[1].blank? ? nil : Youdao.translate(hotel_info['address']),
+				format_address: regex.match(hotel_info['hotel_address'].gsub(/\w|\d/, ''))[1].blank? ? hotel_info['hotel_address'] : nil,
+				street_address: regex.match(hotel_info['hotel_address'].gsub(/\w|\d/, ''))[1].blank? ? nil : Youdao.translate(hotel_info['hotel_address']),
 				tag: 'asiatravel'
 				)
 		end
@@ -325,15 +388,52 @@ class Hotel < ActiveRecord::Base
 		end
 	end
 
-	def self.init_hotels_from_tripadvisor
-		100000.times do |dnum|
-			begin
-				hotel_info = TripadvisorCrawler.get_hotel_info_by_dnum(100000+dnum)
-				hotel_info[:reviews] = Review.create(hotel_info[:reviews])
-				Hotel.create(hotel_info) if hotel_info != nil
-			rescue Exception => e
-				p e
-			end
+	def self.update_or_create_hotels_from_asiatravel_by_country_code_and_city_code country_code, city_code, ingore_ids = []
+		conn = Conn.init('http://localhost:3000', timeout: 1.day.to_i)
+		response = conn.get '/users/login'
+		conn.headers['cookie'] = response.headers['set-cookie']
+		doc = Nokogiri::HTML(response.body)
+		authenticity_token = doc.css("[name='authenticity_token']")[0]['value']
+		response = conn.post '/users/check_password', {
+			utf8: '✓',
+			authenticity_token: authenticity_token,
+			# email: 'nomadop@gmail.com',
+			# pwd: '366534743'
+			email: '123@123.123',
+			pwd: '123456'
+		}
+		conn.headers['cookie'] = response.headers['set-cookie']
+		conn.params['country_code'] = country_code
+		conn.params['city_code'] = city_code
+		conn.params['ignids'] = ingore_ids.join(',')
+		response = conn.get '/hotel_score_caches/get_hotel_infos_from_asiatravel_by_country_code_and_city_code.json'
+		hotel_infos = JSON.parse(response.body)
+		hotel_infos.map do |hotel_info|
+			create_hotel_by_hotel_info_from_asiatravel(hotel_info)
+		end
+	end
+
+	def self.update_or_create_hotels_from_asiatravel_by_country_code country_code, ingore_ids = []
+		conn = Conn.init('http://localhost:3000', timeout: 1.day.to_i)
+		response = conn.get '/users/login'
+		conn.headers['cookie'] = response.headers['set-cookie']
+		doc = Nokogiri::HTML(response.body)
+		authenticity_token = doc.css("[name='authenticity_token']")[0]['value']
+		response = conn.post '/users/check_password', {
+			utf8: '✓',
+			authenticity_token: authenticity_token,
+			# email: 'nomadop@gmail.com',
+			# pwd: '366534743'
+			email: '123@123.123',
+			pwd: '123456'
+		}
+		conn.headers['cookie'] = response.headers['set-cookie']
+		conn.params['country_code'] = country_code
+		conn.params['ignids'] = ingore_ids.join(',')
+		response = conn.get '/hotel_score_caches/get_hotel_infos_from_asiatravel_by_country_code.json'
+		hotel_infos = JSON.parse(response.body)
+		hotel_infos.map do |hotel_info|
+			create_hotel_by_hotel_info_from_asiatravel(hotel_info)
 		end
 	end
 

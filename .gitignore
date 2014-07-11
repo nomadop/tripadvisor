@@ -6,3 +6,5 @@ log.txt
 *.log
 
 *.sqlite3
+
+tmp/pids/server.pid
