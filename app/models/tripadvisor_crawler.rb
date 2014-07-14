@@ -35,11 +35,11 @@ class TripadvisorCrawler
 			gasl: url.match(/d\d+/)[0][1..-1].to_i
 		}
 		doc = Nokogiri::HTML(response.body)
-		regex = /([\u4e00-\u9fa5]*)/
+		cn_reg = /([\u4e00-\u9fa5]*)/
 		hira_reg = /([ぁ-ん]*)/
 		reviews = doc.css('.extended').inject([]) do |result, r|
 			begin
-				unless regex.match(r.css(".innerBubble a")[0].content[1...-1].gsub(/\w|\d/, ''))[1].blank?
+				unless r.css('.entry')[0].content.scan(cn_reg).delete_if{|x| x[0].blank?}.empty?
 					if r.css('.entry')[0].content.scan(hira_reg).delete_if{|x| x[0].blank?}.empty?
 						result << {
 							review_id: r['id'][2..-1].to_i,
@@ -199,6 +199,8 @@ class TripadvisorCrawler
 	def self.get_hotel_infos_by_geourl url, load_reviews = true, *args
 		MyLogger.log "Task start: get_hotel_infos_by_geourl(#{url.split('/').last})"
 
+		options = args.last
+
 		conn = get_conn
 		response = conn.get url
 		doc = Nokogiri::HTML(response.body)
@@ -240,6 +242,7 @@ class TripadvisorCrawler
 				end
 				MyLogger.log "Thread(#{task_number}) finish!"
 			end
+			sleep 0.01
 		end
 		tasks.each { |t| t.join }
 		return hotel_infos
