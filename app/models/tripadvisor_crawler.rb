@@ -59,15 +59,18 @@ class TripadvisorCrawler
 		get_hotel_reviews_by_hotelurl(url, conn)
 	end
 
-	def self.get_hotel_info_by_hotelurl url, load_reviews, lang = 'zhCN'
+	def self.get_hotel_info_by_hotelurl url, load_reviews, *args
 		MyLogger.log "Task start: get_hotel_info_by_hotelurl(#{url.split('/').last})"
+
+		args[0] ||= {} 
+		args[0][:lang] ||= 'zhCN'
 
 		begin
 			conn = get_conn
 			if load_reviews == true
 				response = conn.post '/SetLangFilter', {
 					returnTo: '__2F__' + url.split('/').last.gsub(/_/, '__5F__').gsub(/-/, '__2D__').gsub(/\./, '__2E__'),
-					filterLang: lang
+					filterLang: args[0][:lang]
 				}
 				url = response.headers['location']
 				conn.headers['cookie'] = response.headers['set-cookie']
@@ -170,8 +173,17 @@ class TripadvisorCrawler
 		rescue Exception => e
 			p e
 			puts e.backtrace
-			MyLogger.log "Got hotel_info failed at #{url.split('/').last}! Error: #{e.inspect}, #{e.backtrace}", 'ERROR'
-			return nil
+			if args[0] && args[0][:retry_count]
+				retry_count = args[0][:retry_count]
+			else
+				retry_count = 0
+			end
+			MyLogger.log "Got hotel_info failed at #{url.split('/').last}! retry: #{retry_count}!\n Error: #{e.inspect}, #{e.backtrace}", 'ERROR'
+			if retry_count <= 3
+				get_hotel_info_by_hotelurl(url, load_reviews, retry_count: retry_count + 1)
+			else
+				return nil
+			end
 		end
 	end
 
