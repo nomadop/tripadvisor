@@ -29,7 +29,7 @@ class Hotel < ActiveRecord::Base
 		post_hotel_score_cache_to_senscape(hotel, conn)
 	end
 
-	def self.post_hotel_score_caches_to_senscape
+	def self.post_hotel_score_caches_to_senscape city_name = nil
 		conn = Conn.init('http://asia.senscape.com.cn')
 		response = conn.get '/users/login'
 		conn.headers['cookie'] = response.headers['set-cookie']
@@ -42,7 +42,9 @@ class Hotel < ActiveRecord::Base
 			pwd: '366534743'
 		}
 		conn.headers['cookie'] = response.headers['set-cookie']
-		Hotel.where(tag: 'asiatravel').where.not(hotel_id: nil).each do |hotel|
+		hotels = Hotel.where(tag: 'asiatravel').where.not(hotel_id: nil)
+		hotels = hotels.city(city_name) if city_name
+		hotels.each do |hotel|
 			post_hotel_score_cache_to_senscape(hotel, conn)
 		end
 	end
@@ -455,9 +457,9 @@ class Hotel < ActiveRecord::Base
 		end
 	end
 
-	def self.update_or_create_hotels_by_country_name_from_tripadvisor country_name, load_reviews
+	def self.update_or_create_hotels_by_country_name_from_tripadvisor country_name, load_reviews, ignore_citys = []
 		File.open("log.txt", "w") { |file| file.puts "start mission: update_or_create_hotels_by_country_name_from_tripadvisor(#{country_name}, load_reviews)" }
-		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name)
+		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name, ignore_list: ignore_citys)
 		city_urls.each do |city_url|
 			hotel_infos = TripadvisorCrawler.get_hotel_infos_by_geourl(city_url, load_reviews)
 			hotel_infos.each { |hotel_info| update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info) }

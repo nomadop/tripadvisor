@@ -192,10 +192,10 @@ class TripadvisorCrawler
 		doc = Nokogiri::HTML(response.body)
     hotel_urls = []
 		hotel_infos = []
+		count = doc.css("#INLINE_COUNT i")[0].content.to_i
 		doc.css('#ACCOM_OVERVIEW .listing').each do |hotel|
 			hotel_urls << TripadvisorCrawler::URL + hotel.css('.quality a:first')[0]['href']
 		end
-		count = doc.css("#INLINE_COUNT i")[0].content.to_i
 		MyLogger.log "    got #{count} hotels"
 		if args[0] && args[0][:only_count] == true
 			return count
@@ -208,6 +208,7 @@ class TripadvisorCrawler
 				hotel_urls << TripadvisorCrawler::URL + hotel.css('.quality a:first')[0]['href']
 			end
 		end
+		hotel_urls = hotel_urls[0...count]
 		hotel_urls.each { |url| MyLogger.log "    #{url}" }
 		if args[0] && args[0][:only_id] == true
 			return hotel_urls.map { |url| /d(\d+)/.match(url)[1].to_i }
@@ -280,9 +281,11 @@ class TripadvisorCrawler
 		end
 	end
 
-	def self.get_city_urls_by_country_name country_name
+	def self.get_city_urls_by_country_name country_name, *args
 		MyLogger.log "Task start: get_hotel_infos_by_country_name(#{country_name})"
 
+		args[0] ||= {}
+		args[0][:ignore_list] ||= []
 		query = {
 			action: 'API',
 			types: 'geo,dest',
@@ -302,17 +305,19 @@ class TripadvisorCrawler
 		url = result['url']
 		response = conn.get(url)
 		doc = Nokogiri::HTML(response.body)
-		city_urls = doc.css('.geo_name a').map { |a| a['href'] }
+		city_urls = doc.css('.geo_name a').map { |a| a['href'] unless args[0][:ignore_list].include?(a.content[0...-7]) }
 		count = doc.css('.pgCount')[0].content.split(' ').last.gsub(/\,/, '').to_i
 		20.step(count, 20) do |p|
 			break if p == count
 			response = conn.get url.split('-').insert(2, "oa#{p}").join('-')
 			doc = Nokogiri::HTML(response.body)
-			city_urls += doc.css('.geo_name a').map { |a| a['href'] }
+			city_urls += doc.css('.geo_name a').map { |a| a['href'] unless args[0][:ignore_list].include?(a.content[0...-7]) }
 		end
 		# city_urls.inject([]) do |hotel_infos, city_url|
 		# 	hotel_infos += TripadvisorCrawler.get_hotel_infos_by_geourl(city_url, load_reviews)
 		# end
+		city_urls.delete(nil)
+		MyLogger.log "    got #{city_urls.count} citys"
 		city_urls
 	rescue Faraday::TimeoutError => e
 		get_city_urls_by_country_name(country_name)
