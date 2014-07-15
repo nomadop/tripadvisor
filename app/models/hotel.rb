@@ -16,7 +16,7 @@ class Hotel < ActiveRecord::Base
 		doc = Nokogiri::HTML(response.body)
 		authenticity_token = doc.css("[name='authenticity_token']")[0]['value']
 		matched_hotel = Hotel.find(hotel.hotel_id)
-		response = conn.post '/hotel_score_caches', {
+		response = conn.post '/hotel_score_caches/update_or_create', {
 			'authenticity_token' => authenticity_token,
 			'hotel_score_cache[hotel_code]' => hotel.source_id,
 			'hotel_score_cache[hotel_name]' => hotel.name,
@@ -29,8 +29,14 @@ class Hotel < ActiveRecord::Base
 		post_hotel_score_cache_to_senscape(hotel, conn)
 	end
 
-	def self.post_hotel_score_caches_to_senscape city_name = nil
-		conn = Conn.init('http://asia.senscape.com.cn')
+	def self.post_hotel_score_caches_to_senscape *args
+		args << {} unless args.last.instance_of?(Hash)
+		options = args.last
+		options[:host] = 'http://asia.senscape.com.cn' if options[:host] == nil
+		options[:login] = 'nomadop@gmail.com' if options[:login] == nil
+		options[:pwd] = '366534743' if options[:pwd] == nil
+
+		conn = Conn.init(options[:host])
 		response = conn.get '/users/login'
 		conn.headers['cookie'] = response.headers['set-cookie']
 		doc = Nokogiri::HTML(response.body)
@@ -38,12 +44,12 @@ class Hotel < ActiveRecord::Base
 		response = conn.post '/users/check_password', {
 			utf8: '✓',
 			authenticity_token: authenticity_token,
-			email: 'nomadop@gmail.com',
-			pwd: '366534743'
+			email: options[:login],
+			pwd: options[:pwd]
 		}
 		conn.headers['cookie'] = response.headers['set-cookie']
 		hotels = Hotel.where(tag: 'asiatravel').where.not(hotel_id: nil)
-		hotels = hotels.city(city_name) if city_name
+		hotels = hotels.city(options[:city_name]) if options[:city_name]
 		hotels.each do |hotel|
 			post_hotel_score_cache_to_senscape(hotel, conn)
 		end
@@ -55,11 +61,7 @@ class Hotel < ActiveRecord::Base
 
 	def match_hotels_from_other_tag hotels, *args
 		simi_table = hotels.inject([]) do |table, hotel|
-			if args[0] && args[0][:no_dist] == false
-				simi = Hotel.similarity(self, hotel, false)
-			else
-				simi = Hotel.similarity(self, hotel)
-			end
+			simi = Hotel.similarity(self, hotel, *args)
 			i = 0
 			for i in (0..table.size) do
 				break if table[i] && table[i][1] < simi
@@ -81,12 +83,13 @@ class Hotel < ActiveRecord::Base
 	def self.match_hotels_between_tripadvisor_and_asiatravel_by_country country_name, *args
 		hotels_from_asiatravel = Hotel.where(tag: 'asiatravel').city(country_name)
 		citys = hotels_from_asiatravel.map{ |hotel| hotel.location['City'] }.uniq
-		citys.each { |city| match_hotels_between_tripadvisor_and_asiatravel_by_city(city, *args) }
+		citys.each { |city| match_hotels_between_tripadvisor_and_asiatravel_by_city(country_name, city, *args) }
 	end
 
-	def self.match_hotels_between_tripadvisor_and_asiatravel_by_city city_name, *args
+	def self.match_hotels_between_tripadvisor_and_asiatravel_by_city country_name, city_name, *args
 		hotelsA = Hotel.where(tag: 'asiatravel').city(city_name)
 		hotelsB = Hotel.where(tag: 'tripadvisor').city(city_name)
+		hotelsB = Hotel.where(tag: 'tripadvisor').city(country_name) if hotelsB.empty?
 		# File.open("similarity.log", "w") { |file| file.puts "start:" }
 		hotelsA.each do |hotelA|
 			result = hotelA.match_hotels_from_other_tag(hotelsB, *args)
@@ -243,28 +246,38 @@ class Hotel < ActiveRecord::Base
 		end
 	end
 
-	def self.similarity hotelA, hotelB, with_distance = true
+	def self.similarity hotelA, hotelB, *args
+		args << {} unless args.last.instance_of?(Hash)
+		options = args.last
+		options[:with_distance] = true if options[:with_distance] == nil
+		options[:with_num] = true if options[:with_num] == nil
+		options[:algorithm] = :lcs if options[:algorithm] == nil
+
+		# puts options
+
 		similarity = 0
-		num_regexp = /\b(\d+[\-\d+]?*)\b/
-		if hotelA.format_address.blank?
-			a_nums = hotelA.street_address.scan(num_regexp).map { |a| a[0] }
-			b_nums = hotelB.street_address.scan(num_regexp).map { |a| a[0] }
-		else
-			a_nums = hotelA.format_address.scan(num_regexp).map { |a| a[0] }
-			b_nums = hotelB.format_address.scan(num_regexp).map { |a| a[0] }
-		end
-		a_nums.each do |an|
-			b_nums.each do |bn|
-				similarity += 0.1 * an.to_s.size if an == bn
+		if options[:with_num] == true
+			num_regexp = /\b(\d+([\-\/]\d+)?([\-\/]\d+)?([\-\/]\d+)?[A-E]?)\b/
+			if hotelA.format_address.blank?
+				a_nums = hotelA.street_address.scan(num_regexp).map { |a| a[0] }
+				b_nums = hotelB.street_address.scan(num_regexp).map { |a| a[0] }
+			else
+				a_nums = hotelA.format_address.scan(num_regexp).map { |a| a[0] }
+				b_nums = hotelB.format_address.scan(num_regexp).map { |a| a[0] }
+			end
+			a_nums.each do |an|
+				b_nums.each do |bn|
+					similarity += 0.1 * an.to_s.size if an == bn
+				end
 			end
 		end
-		similarity += levenshtein(hotelA.name, hotelB.name) * 0.7
+		similarity += self.send(options[:algorithm], hotelA.name, hotelB.name) * 0.5
 		if hotelA.format_address.blank?
-			similarity += levenshtein(hotelA.street_address, hotelB.street_address) * 0.3
+			similarity += self.send(options[:algorithm], hotelA.street_address, hotelB.street_address) * 0.5
 		else
-			similarity += levenshtein(hotelA.format_address, hotelB.format_address) * 0.3
+			similarity += self.send(options[:algorithm], hotelA.format_address, hotelB.format_address) * 0.5
 		end
-		if with_distance == true
+		if options[:with_distance] == true
 			if hotelB.location['latlng']
 				latlngs = hotelB.location['latlng']
 			else
@@ -289,6 +302,22 @@ class Hotel < ActiveRecord::Base
 		end
 		#puts "similarity between (#{hotelA.name}) and (#{hotelB.name}) is #{similarity}"
 		return similarity
+	end
+
+	def self.lcs str1, str2, base_on = :min
+		domic = str1.chars.map{[0]}
+		domic[0] += str2.chars.map{0}
+		domic << [0]
+		str1.chars.each_with_index do |c1, i|
+			str2.chars.each_with_index do |c2, j|
+				if c1.downcase == c2.downcase
+					domic[i + 1][j + 1] = domic[i][j] + 1
+				else
+					domic[i + 1][j + 1] = [domic[i + 1][j], domic[i][j + 1]].max
+				end
+			end
+		end
+		domic.last.last.to_f / [str1.size, str2.size].send(base_on).to_f
 	end
 
 	def self.levenshtein str1, str2, weight = 1.0
@@ -461,7 +490,7 @@ class Hotel < ActiveRecord::Base
 		File.open("log.txt", "w") { |file| file.puts "start mission: update_or_create_hotels_by_country_name_from_tripadvisor(#{country_name}, load_reviews)" }
 		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name, ignore_list: ignore_citys)
 		city_urls.each do |city_url|
-			hotel_infos = TripadvisorCrawler.get_hotel_infos_by_geourl(city_url, load_reviews)
+			hotel_infos = TripadvisorCrawler.get_all_infos_by_geourl(city_url, load_reviews: load_reviews)
 			hotel_infos.each { |hotel_info| update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info) }
 		end
 	end

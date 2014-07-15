@@ -60,17 +60,18 @@ class TripadvisorCrawler
 	end
 
 	def self.get_hotel_info_by_hotelurl url, load_reviews, *args
-		MyLogger.log "Task start: get_hotel_info_by_hotelurl(#{url.split('/').last})"
+		args << {} unless args.last.instance_of?(Hash)
+		options = args.last
+		options[:lang] = 'zhCN' if options[:lang] == nil
 
-		args[0] ||= {} 
-		args[0][:lang] ||= 'zhCN'
+		MyLogger.log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} start: get_hotel_info_by_hotelurl(#{url.split('/').last})"
 
 		begin
 			conn = get_conn
 			if load_reviews == true
 				response = conn.post '/SetLangFilter', {
 					returnTo: '__2F__' + url.split('/').last.gsub(/_/, '__5F__').gsub(/-/, '__2D__').gsub(/\./, '__2E__'),
-					filterLang: args[0][:lang]
+					filterLang: options[:lang]
 				}
 				url = response.headers['location']
 				conn.headers['cookie'] = response.headers['set-cookie']
@@ -166,10 +167,11 @@ class TripadvisorCrawler
 					conn.params = {}
 				end
 			end
+			MyLogger.log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} finish: get_hotel_info_by_hotelurl(#{url.split('/').last})"
 			return hotel_info
 		rescue Faraday::TimeoutError => e
-			MyLogger.log "Timeout when Got hotel_info from #{url.split('/').last}, retry:", 'WARNING'
-			get_hotel_info_by_hotelurl(url, load_reviews)
+			MyLogger.log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} WARNING: Timeout when Got hotel_info from #{url.split('/').last}, retry:", 'WARNING'
+			get_hotel_info_by_hotelurl(url, load_reviews, *args)
 		rescue Exception => e
 			p e
 			puts e.backtrace
@@ -178,9 +180,10 @@ class TripadvisorCrawler
 			else
 				retry_count = 0
 			end
+			args[0][:retry_count] = retry_count + 1
 			MyLogger.log "Got hotel_info failed at #{url.split('/').last}! retry: #{retry_count}!\n Error: #{e.inspect}, #{e.backtrace}", 'ERROR'
 			if retry_count <= 3
-				get_hotel_info_by_hotelurl(url, load_reviews, retry_count: retry_count + 1)
+				get_hotel_info_by_hotelurl(url, load_reviews, *args)
 			else
 				return nil
 			end
@@ -196,10 +199,14 @@ class TripadvisorCrawler
 		get_hotel_info_by_hotelurl(location)
 	end
 
-	def self.get_hotel_infos_by_geourl url, load_reviews = true, *args
+	def self.get_hotel_infos_by_geourl url, *args
 		MyLogger.log "Task start: get_hotel_infos_by_geourl(#{url.split('/').last})"
 
+		args << {} unless args.last.instance_of?(Hash)
 		options = args.last
+		options[:load_reviews] = true if options[:load_reviews] == nil
+
+		puts options
 
 		conn = get_conn
 		response = conn.get url
@@ -211,12 +218,12 @@ class TripadvisorCrawler
 			hotel_urls << TripadvisorCrawler::URL + hotel.css('.quality a:first')[0]['href']
 		end
 		MyLogger.log "    got #{count} hotels"
-		if args[0] && args[0][:only_count] == true
+		if options[:only_count] == true
 			return count
 		end
 		30.step(count, 30) do |p|
 			break if p == count
-			response = conn.get url.split('-').insert(2, "oa#{p}").join('-')
+			response = conn.get url.split('-').insert(url.split('-').size - 2, "oa#{p}").join('-')
 			doc = Nokogiri::HTML(response.body)
 			doc.css('#ACCOM_OVERVIEW .listing').each do |hotel|
 				hotel_urls << TripadvisorCrawler::URL + hotel.css('.quality a:first')[0]['href']
@@ -224,8 +231,11 @@ class TripadvisorCrawler
 		end
 		hotel_urls = hotel_urls[0...count]
 		hotel_urls.each { |url| MyLogger.log "    #{url}" }
-		if args[0] && args[0][:only_id] == true
+		if options[:only_id] == true
 			return hotel_urls.map { |url| /d(\d+)/.match(url)[1].to_i }
+		end
+		if options[:only_url] == true
+			return hotel_urls
 		end
 		tasks = []
     mutex = Mutex.new
@@ -235,12 +245,12 @@ class TripadvisorCrawler
 			end
 			tasks << Thread.new do
 				task_number = tasks.size
-				MyLogger.log "Thread(#{task_number}) start!"
-				hotel_info = get_hotel_info_by_hotelurl(url, load_reviews)
+				# MyLogger.log "Thread(#{task_number}) start!"
+				hotel_info = get_hotel_info_by_hotelurl(url, options[:load_reviews], task_number: task_number)
 				mutex.synchronize do
 					hotel_infos << hotel_info if hotel_info
 				end
-				MyLogger.log "Thread(#{task_number}) finish!"
+				# MyLogger.log "Thread(#{task_number}) finish!"
 			end
 			sleep 0.01
 		end
@@ -248,7 +258,17 @@ class TripadvisorCrawler
 		return hotel_infos
 	rescue Faraday::TimeoutError => e
 		MyLogger.log "Timeout when Got hotel_infos from #{url.split('/').last}, retry:", 'WARNING'
-		get_hotel_infos_by_geourl(url, load_reviews)
+		get_hotel_infos_by_geourl(url, options)
+	rescue Exception => e
+		p e
+		p e.backtrace
+		return []
+	end
+
+	def self.get_all_infos_by_geourl url, *args
+		get_hotel_infos_by_geourl(url, *args) +
+		get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), *args) +
+		get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), *args)
 	end
 
 	def self.get_hotel_infos_by_gnum gnum
@@ -276,7 +296,7 @@ class TripadvisorCrawler
 		response = conn.post TripadvisorCrawler::QUERY_URL, query
 		result = JSON.parse(response.body)['results'].select{|r| r['title'] == 'Destinations'}[0]
 		if result
-			get_hotel_infos_by_geourl(result['url'], load_reviews)
+			get_all_infos_by_geourl(result['url'], load_reviews: load_reviews)
 		else
 			[]
 		end
@@ -285,14 +305,14 @@ class TripadvisorCrawler
 	def self.get_hotel_count_by_country_name country_name
 		city_urls = get_city_urls_by_country_name(country_name)
 		city_urls.inject(0) do |count, city_url|
-			count += get_hotel_infos_by_geourl(city_url, false, only_count: true)
+			count += get_all_infos_by_geourl(city_url, load_reviews: false, only_count: true)
 		end
 	end
 
 	def self.get_hotel_ids_by_country_name country_name
 		city_urls = get_city_urls_by_country_name(country_name)
 		city_urls.inject([]) do |ids, city_url|
-			ids += get_hotel_infos_by_geourl(city_url, false, only_id: true)
+			ids += get_all_infos_by_geourl(city_url, load_reviews: false, only_id: true)
 		end
 	end
 
@@ -328,9 +348,6 @@ class TripadvisorCrawler
 			doc = Nokogiri::HTML(response.body)
 			city_urls += doc.css('.geo_name a').map { |a| a['href'] unless args[0][:ignore_list].include?(a.content[0...-7]) }
 		end
-		# city_urls.inject([]) do |hotel_infos, city_url|
-		# 	hotel_infos += TripadvisorCrawler.get_hotel_infos_by_geourl(city_url, load_reviews)
-		# end
 		city_urls.delete(nil)
 		MyLogger.log "    got #{city_urls.count} citys"
 		city_urls

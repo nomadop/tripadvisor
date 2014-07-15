@@ -6,9 +6,10 @@ class HotelsController < ApplicationController
   def index
     params[:page] ||= 1
     params[:per_page] ||= 100
-    @hotels = Hotel.includes(:reviews).page(params[:page]).per(params[:per_page])
     if params[:city]
-      @hotels = @hotels.select { |h| h.location['City'] == params[:city] }
+      @hotels = Hotel.includes(:reviews).city(params[:city]).page(params[:page]).per(params[:per_page])
+    else
+      @hotels = Hotel.includes(:reviews).page(params[:page]).per(params[:per_page])
     end
   end
 
