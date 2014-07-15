@@ -252,7 +252,7 @@ class TripadvisorCrawler
 				end
 				# MyLogger.log "Thread(#{task_number}) finish!"
 			end
-			sleep 0.01
+			sleep 0.1
 		end
 		tasks.each { |t| t.join }
 		return hotel_infos
