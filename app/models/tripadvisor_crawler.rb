@@ -240,7 +240,7 @@ class TripadvisorCrawler
 		tasks = []
     mutex = Mutex.new
 		hotel_urls.each do |url|
-			while tasks.select{ |t| t.alive? }.size >= 30
+			while tasks.select{ |t| t.alive? }.size >= 25
 				sleep 1
 			end
 			tasks << Thread.new do
