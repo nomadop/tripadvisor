@@ -8,3 +8,7 @@ log.txt
 *.sqlite3
 
 tmp/pids/server.pid
+
+config/database.yml
+
+config/database_postgres.yml
