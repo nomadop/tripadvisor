@@ -9,6 +9,8 @@ class HotelsController < ApplicationController
     Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(params[:cname], params[:review], ignore_citys)
 
     render text: 'successful'
+  rescue Exception => e
+    render json: { error => e }
   end
 
   # GET /hotels
