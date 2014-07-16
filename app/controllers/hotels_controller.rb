@@ -5,12 +5,14 @@ class HotelsController < ApplicationController
   end
 
   def update_or_create_hotels_by_country_name_from_tripadvisor
-    ignore_citys = params[:igncts] ? params[:igncts] : []
-    Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(params[:cname], params[:review], ignore_citys)
+    begin
+      ignore_citys = params[:igncts] ? params[:igncts] : []
+      Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(params[:cname], params[:review], ignore_citys)
 
-    render text: 'successful'
-  rescue Exception => e
-    render json: { error => e }
+      render text: 'successful'
+    rescue Exception => e
+      render json: { error => e }
+    end
   end
 
   # GET /hotels
