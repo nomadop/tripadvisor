@@ -1,6 +1,16 @@
 class HotelsController < ApplicationController
   before_action :set_hotel, only: [:show, :edit, :update, :destroy]
 
+  def api
+  end
+
+  def update_or_create_hotels_by_country_name_from_tripadvisor
+    ignore_citys = params[:igncts] ? params[:igncts] : []
+    Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(params[:cname], params[:review], ignore_citys)
+
+    render text: 'successful'
+  end
+
   # GET /hotels
   # GET /hotels.json
   def index

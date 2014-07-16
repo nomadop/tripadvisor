@@ -1,7 +1,12 @@
 Rails.application.routes.draw do
   resources :reviews
 
-  resources :hotels
+  resources :hotels do
+    collection do
+      post 'update_or_create_hotels_by_country_name_from_tripadvisor'
+      get 'api'
+    end
+  end
 
   root 'home#index'
   get 'home/send_mail'

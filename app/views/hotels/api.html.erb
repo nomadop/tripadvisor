@@ -1,0 +1,11 @@
+<%= form_tag(update_or_create_hotels_by_country_name_from_tripadvisor_hotels_path, method: :post) do %>
+
+<%= label_tag 'cname' %>
+<%= text_field_tag 'cname' %>
+
+<%= label_tag 'review' %>
+<%= select_tag 'review', options_for_select([ true, false ], true) %>
+
+<%= submit_tag 'submit' %>
+
+<% end %>
