@@ -4,6 +4,18 @@ class HotelsController < ApplicationController
   def api
   end
 
+  def update_or_create_hotel_by_hotel_infos_from_asiatravel
+    begin
+      hotel_infos = JSON.parse(params[:hotels])
+      hotels = hotel_infos.map do |hotel_info|
+        Hotel.create_hotel_by_hotel_info_from_asiatravel(hotel_info)
+      end
+      render json: hotels
+    rescue Exception => e
+      render json: { error: e }
+    end
+  end
+
   def update_or_create_hotels_by_country_name_from_tripadvisor
     begin
       ignore_citys = params[:igncts] ? params[:igncts] : []
@@ -11,7 +23,7 @@ class HotelsController < ApplicationController
 
       render json: hotels
     rescue Exception => e
-      render json: { 'error' => e }
+      render json: { error: e }
     end
   end
 
@@ -20,7 +32,7 @@ class HotelsController < ApplicationController
       hotels = Hotel.update_or_create_hotels_from_asiatravel_by_country_code(params[:code])
       render json: hotels
     rescue Exception => e
-      render json: { 'error' => e }
+      render json: { error: e }
     end
   end
 

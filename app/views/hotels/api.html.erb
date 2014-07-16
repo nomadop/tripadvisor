@@ -24,3 +24,15 @@
 
 <% end %>
 </div>
+
+<div>
+<h3>Update or create hotels by hotel infos from asiatravel</h3>
+<%= form_tag(update_or_create_hotel_by_hotel_infos_from_asiatravel_hotels_path, method: :post) do %>
+
+<%= label_tag 'hotels' %>
+<%= text_area_tag 'hotels' %>
+
+<%= submit_tag 'submit' %>
+
+<% end %>
+</div>

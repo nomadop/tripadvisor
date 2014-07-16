@@ -404,6 +404,7 @@ class Hotel < ActiveRecord::Base
 				tag: 'asiatravel'
 				)
 		end
+		return hotel
 	end
 
 	# def self.init_hotels_from_asiatravel city_name = nil
@@ -451,11 +452,17 @@ class Hotel < ActiveRecord::Base
 		hotel_infos.map do |hotel_info|
 			create_hotel_by_hotel_info_from_asiatravel(hotel_info)
 		end
+	rescue Faraday::TimeoutError => e
+		update_or_create_hotels_from_asiatravel_by_country_code_and_city_code(country_code, city_code, ingore_ids)
+	rescue Exception => e
+		p e
+		p e.backtrace
+		return []
 	end
 
 	def self.update_or_create_hotels_from_asiatravel_by_country_code country_code, ingore_ids = []
-		conn = Conn.init('http://asia.senscape.com.cn', timeout: 1.day.to_i)
-		# conn = Conn.init('http://localhost:3000', timeout: 1.day.to_i)
+		# conn = Conn.init('http://asia.senscape.com.cn', timeout: 1.day.to_i)
+		conn = Conn.init('http://localhost:3000', timeout: 1.day.to_i)
 		response = conn.get '/users/login'
 		conn.headers['cookie'] = response.headers['set-cookie']
 		doc = Nokogiri::HTML(response.body)
@@ -463,10 +470,10 @@ class Hotel < ActiveRecord::Base
 		response = conn.post '/users/check_password', {
 			utf8: '✓',
 			authenticity_token: authenticity_token,
-			email: 'nomadop@gmail.com',
-			pwd: '366534743'
-			# email: '123@123.123',
-			# pwd: '123456'
+			# email: 'nomadop@gmail.com',
+			# pwd: '366534743'
+			email: '123@123.123',
+			pwd: '123456'
 		}
 		conn.headers['cookie'] = response.headers['set-cookie']
 		conn.params['country_code'] = country_code
@@ -476,6 +483,12 @@ class Hotel < ActiveRecord::Base
 		hotel_infos.map do |hotel_info|
 			create_hotel_by_hotel_info_from_asiatravel(hotel_info)
 		end
+	rescue Faraday::TimeoutError => e
+		update_or_create_hotels_from_asiatravel_by_country_code(country_code, city_code, ingore_ids)
+	rescue Exception => e
+		p e
+		p e.backtrace
+		return []
 	end
 
 	def self.update_or_create_hotel_by_hotel_info_from_tripadvisor hotel_info
