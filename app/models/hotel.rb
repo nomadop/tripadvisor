@@ -385,7 +385,7 @@ class Hotel < ActiveRecord::Base
 				tag: 'asiatravel'
 				)
 		else
-			Hotel.create(
+			hotel = Hotel.create(
 				source_id: source_id,
 				name: name,
 				# star_rating: hotel_info['star_rating_name'].to_f,
