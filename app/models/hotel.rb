@@ -10,6 +10,14 @@ class Hotel < ActiveRecord::Base
 	scope :city, ->(city_name){ where("location like ?", "%#{city_name}%") }
 	has_many :reviews, dependent: :destroy
 
+	def to_l
+		{
+			street: street_address ? street_address : format_address,
+			city: location['City'],
+			country: location['Country']
+		}
+	end
+
 	def self.post_hotel_score_cache_to_senscape hotel, conn
 		response = conn.get '/hotel_score_caches/new'
 		conn.headers['cookie'] = response.headers['set-cookie']
@@ -491,13 +499,13 @@ class Hotel < ActiveRecord::Base
 	def self.update_or_create_hotels_by_country_name_from_tripadvisor country_name, load_reviews, ignore_citys = []
 		File.open("log.txt", "w") { |file| file.puts "start mission: update_or_create_hotels_by_country_name_from_tripadvisor(#{country_name}, load_reviews)" }
 		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name, ignore_list: ignore_citys)
-		task = Thread.new {}
+		# task = Thread.new {}
 		city_urls.each do |city_url|
 			hotel_infos = TripadvisorCrawler.get_all_infos_by_geourl(city_url, load_reviews: load_reviews)
-			task.join
-			task = Thread.new do
+			# task.join
+			# task = Thread.new do
 				hotel_infos.each { |hotel_info| update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info) }
-			end
+			# end
 		end
 	end
 

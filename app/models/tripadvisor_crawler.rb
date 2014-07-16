@@ -57,6 +57,10 @@ class TripadvisorCrawler
 	rescue Faraday::TimeoutError => e
 		MyLogger.log "Timeout when Got hotel_reviews from #{url.split('/').last}, retry:", 'WARNING'
 		get_hotel_reviews_by_hotelurl(url, conn)
+	rescue Exception => e
+		p e
+		p e.backtrace
+		return nil
 	end
 
 	def self.get_hotel_info_by_hotelurl url, load_reviews, *args
@@ -126,6 +130,7 @@ class TripadvisorCrawler
 					break if p == count
 					hotel_paginated_url = p == 0 ? url : url.split('-').insert(4, "or#{p}").join('-')
 					reviews = get_hotel_reviews_by_hotelurl(hotel_paginated_url, conn)
+					reviews.delete(nil)
 					# response = conn.get p == 0 ? url : url.split('-').insert(4, "or#{p}").join('-')
 					# doc = Nokogiri::HTML(response.body)
 					# review_ids = doc.css('.reviewSelector').map { |x| x['id'][7..-1].to_i }
