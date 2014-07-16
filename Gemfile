@@ -50,3 +50,5 @@ gem 'faye'
 gem 'thin'
 
 gem 'kaminari'
+
+gem 'whenever', :require => false

@@ -486,12 +486,13 @@ class Hotel < ActiveRecord::Base
 		else
 			Hotel.create(hotel_info)
 		end
+		return hotel
 	end
 
 	def self.update_or_create_hotels_by_city_name_from_tripadvisor city_name, load_reviews
 		File.open("log.txt", "w") { |file| file.puts "start mission: update_or_create_hotels_by_city_name_from_tripadvisor(#{city_name}, load_reviews)" }
 		hotel_infos = TripadvisorCrawler.get_hotel_infos_by_city_name(city_name, load_reviews)
-		hotel_infos.each do |hotel_info|
+		hotel_infos.map do |hotel_info|
 			update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info)
 		end
 	end
@@ -500,11 +501,11 @@ class Hotel < ActiveRecord::Base
 		File.open("log.txt", "w") { |file| file.puts "start mission: update_or_create_hotels_by_country_name_from_tripadvisor(#{country_name}, load_reviews)" }
 		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name, ignore_list: ignore_citys)
 		# task = Thread.new {}
-		city_urls.each do |city_url|
+		city_urls.inject([]) do |result, city_url|
 			hotel_infos = TripadvisorCrawler.get_all_infos_by_geourl(city_url, load_reviews: load_reviews)
 			# task.join
 			# task = Thread.new do
-				hotel_infos.each { |hotel_info| update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info) }
+			result += hotel_infos.map { |hotel_info| update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info) }
 			# end
 		end
 	end

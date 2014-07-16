@@ -218,7 +218,11 @@ class TripadvisorCrawler
 		doc = Nokogiri::HTML(response.body)
     hotel_urls = []
 		hotel_infos = []
-		count = doc.css("#INLINE_COUNT i")[0].content.to_i
+		begin
+			count = doc.css("#INLINE_COUNT i")[0].content.to_i
+		rescue Exception => e
+			count = 0
+		end
 		doc.css('#ACCOM_OVERVIEW .listing').each do |hotel|
 			hotel_urls << TripadvisorCrawler::URL + hotel.css('.quality a:first')[0]['href']
 		end

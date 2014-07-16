@@ -1,3 +1,5 @@
+<div>
+<h3>Update or create hotels by country name from tripadvisor</h3>
 <%= form_tag(update_or_create_hotels_by_country_name_from_tripadvisor_hotels_path, method: :post) do %>
 
 <%= label_tag 'cname' %>
@@ -9,3 +11,16 @@
 <%= submit_tag 'submit' %>
 
 <% end %>
+</div>
+
+<div>
+<h3>Update or create hotels from asiatravel by country code</h3>
+<%= form_tag(update_or_create_hotels_from_asiatravel_by_country_code_hotels_path, method: :post) do %>
+
+<%= label_tag 'code' %>
+<%= text_field_tag 'code' %>
+
+<%= submit_tag 'submit' %>
+
+<% end %>
+</div>

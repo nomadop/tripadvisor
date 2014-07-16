@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resources :hotels do
     collection do
       post 'update_or_create_hotels_by_country_name_from_tripadvisor'
+      post 'update_or_create_hotels_from_asiatravel_by_country_code'
       get 'api'
     end
   end
