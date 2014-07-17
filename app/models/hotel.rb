@@ -265,7 +265,7 @@ class Hotel < ActiveRecord::Base
 		options[:address_weight] = 0.5 if options[:address_weight] == nil
 		options[:ingore_num] = "" if options[:ingore_num] == nil
 
-		puts options
+		puts options if options[:debug]
 
 		similarity = 0
 		if options[:with_num] == true
