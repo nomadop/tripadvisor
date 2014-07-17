@@ -8,7 +8,13 @@ class HotelsController < ApplicationController
     begin
       File.open("similarity.log", "w") { |file| file.puts "start:" }
       args = params[:args].blank? ? nil : JSON.parse(params[:args])
-      Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(params[:cname], *args)
+      if args
+        args.keys.each do |k|
+          args[k.to_sym] = args[k]
+          args.delete(k)
+        end
+      end
+      Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(params[:cname], args)
       render text: 'success'
     rescue Exception => e
       render json: { error: [e.inspect, e.backtrace] }
