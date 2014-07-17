@@ -8,6 +8,7 @@ class Hotel < ActiveRecord::Base
 	serialize :traveler_rating, Hash
 	serialize :rating_summary, Hash
 	scope :city, ->(city_name){ where("location like ?", "%#{city_name}%") }
+	default_scope { order(created_at: :desc) }
 	has_many :reviews, dependent: :destroy
 
 	def to_l
@@ -260,6 +261,8 @@ class Hotel < ActiveRecord::Base
 		options[:with_distance] = true if options[:with_distance] == nil
 		options[:with_num] = true if options[:with_num] == nil
 		options[:algorithm] = :lcs if options[:algorithm] == nil
+		options[:name_weight] = 0.5 if options[:name_weight] == nil
+		options[:address_weight] = 0.5 if options[:address_weight] == nil
 
 		# puts options
 
@@ -279,11 +282,11 @@ class Hotel < ActiveRecord::Base
 				end
 			end
 		end
-		similarity += self.send(options[:algorithm], hotelA.name, hotelB.name) * 0.5
+		similarity += self.send(options[:algorithm], hotelA.name, hotelB.name) * options[:name_weight]
 		if hotelA.format_address.blank?
-			similarity += self.send(options[:algorithm], hotelA.street_address, hotelB.street_address) * 0.5
+			similarity += self.send(options[:algorithm], hotelA.street_address, hotelB.street_address) * options[:address_weight]
 		else
-			similarity += self.send(options[:algorithm], hotelA.format_address, hotelB.format_address) * 0.5
+			similarity += self.send(options[:algorithm], hotelA.format_address, hotelB.format_address) * options[:address_weight]
 		end
 		if options[:with_distance] == true
 			if hotelB.location['latlng']
