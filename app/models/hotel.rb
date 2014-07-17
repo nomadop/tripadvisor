@@ -263,8 +263,9 @@ class Hotel < ActiveRecord::Base
 		options[:algorithm] = :lcs if options[:algorithm] == nil
 		options[:name_weight] = 0.5 if options[:name_weight] == nil
 		options[:address_weight] = 0.5 if options[:address_weight] == nil
+		options[:ingore_num] = "" if options[:ingore_num] == nil
 
-		# puts options
+		puts options
 
 		similarity = 0
 		if options[:with_num] == true
@@ -277,6 +278,7 @@ class Hotel < ActiveRecord::Base
 				b_nums = hotelB.format_address.scan(num_regexp).map { |a| a[0] }
 			end
 			a_nums.each do |an|
+				next if options[:ingore_num].include?(an)
 				b_nums.each do |bn|
 					similarity += 0.1 * an.to_s.size if an == bn
 				end
