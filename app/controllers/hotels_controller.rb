@@ -4,6 +4,16 @@ class HotelsController < ApplicationController
   def api
   end
 
+  def match_hotels_between_tripadvisor_and_asiatravel_by_country
+    match_hotels_between_tripadvisor_and_asiatravel_by_country country_name, *args
+    begin
+      Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(params[:cname], *JSON.parse(params[:args]))
+      render text: 'success'
+    rescue Exception => e
+      render json: { error: [e.inspect, e.backtrace] }
+    end
+  end
+
   def update_or_create_hotel_by_hotel_infos_from_asiatravel
     begin
       hotel_infos = JSON.parse(params[:hotels])
@@ -12,7 +22,7 @@ class HotelsController < ApplicationController
       end
       render json: hotels
     rescue Exception => e
-      render json: { error: e }
+      render json: { error: [e.inspect, e.backtrace] }
     end
   end
 
@@ -23,7 +33,7 @@ class HotelsController < ApplicationController
 
       render json: hotels
     rescue Exception => e
-      render json: { error: e }
+      render json: { error: [e.inspect, e.backtrace] }
     end
   end
 
@@ -32,7 +42,7 @@ class HotelsController < ApplicationController
       hotels = Hotel.update_or_create_hotels_from_asiatravel_by_country_code(params[:code])
       render json: hotels
     rescue Exception => e
-      render json: { error: e }
+      render json: { error: [e.inspect, e.backtrace] }
     end
   end
 
