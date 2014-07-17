@@ -6,6 +6,7 @@ Rails.application.routes.draw do
       post 'update_or_create_hotels_by_country_name_from_tripadvisor'
       post 'update_or_create_hotels_from_asiatravel_by_country_code'
       post 'update_or_create_hotel_by_hotel_infos_from_asiatravel'
+      post 'match_hotels_between_tripadvisor_and_asiatravel_by_country'
       get 'api'
     end
   end

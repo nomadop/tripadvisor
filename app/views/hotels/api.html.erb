@@ -36,3 +36,18 @@
 
 <% end %>
 </div>
+
+<div>
+<h3>Match hotels between tripadvisor and asiatravel by country</h3>
+<%= form_tag(match_hotels_between_tripadvisor_and_asiatravel_by_country_hotels_path, method: :post) do %>
+
+<%= label_tag 'cname' %>
+<%= text_field_tag 'cname' %>
+
+<%= label_tag 'args' %>
+<%= text_field_tag 'args' %>
+
+<%= submit_tag 'submit' %>
+
+<% end %>
+</div>
