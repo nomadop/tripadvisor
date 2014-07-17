@@ -8,7 +8,7 @@ class Hotel < ActiveRecord::Base
 	serialize :traveler_rating, Hash
 	serialize :rating_summary, Hash
 	scope :city, ->(city_name){ where("location like ?", "%#{city_name}%") }
-	default_scope { order(created_at: :desc) }
+	default_scope { order(:created_at) }
 	has_many :reviews, dependent: :destroy
 
 	def to_l
