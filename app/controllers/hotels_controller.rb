@@ -14,6 +14,10 @@ class HotelsController < ApplicationController
           args.delete(k)
         end
       end
+      if args[:ingore_num]
+        s, t = args[:ingore_num].split('-')
+        args[:ingore_num] = Range.new(s, t)
+      end
       Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(params[:cname], args)
       render text: 'success'
     rescue Exception => e
