@@ -264,9 +264,11 @@ class Hotel < ActiveRecord::Base
 		options[:name_weight] = 0.5 if options[:name_weight] == nil
 		options[:address_weight] = 0.5 if options[:address_weight] == nil
 		options[:ingore_num] = "" if options[:ingore_num] == nil
-
-		puts options if options[:debug]
-
+		if options[:debug]
+			File.open("similarity.log", "a+") do |file|
+				file.puts options
+			end
+		end
 		similarity = 0
 		if options[:with_num] == true
 			num_regexp = /\b(\d+([\-\/]\d+)?([\-\/]\d+)?([\-\/]\d+)?[A-E]?)\b/
