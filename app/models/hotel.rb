@@ -100,22 +100,34 @@ class Hotel < ActiveRecord::Base
 	end
 
 	def self.match_hotels_between_tripadvisor_and_asiatravel_by_country country_name, *args
+		args << {} unless args.last.instance_of?(Hash)
+		options = args.last
+
 		hotels_from_asiatravel = Hotel.where(tag: 'asiatravel').city(country_name)
 		citys = hotels_from_asiatravel.map{ |hotel| hotel.location['City'] }.uniq
-		citys.each { |city| match_hotels_between_tripadvisor_and_asiatravel_by_city(country_name, city, *args) }
+		total_hotelsA_count = Hotel.where(tag: 'asiatravel').city(country_name).count
+		citys.inject(0) do |offset, city|
+			offset += match_hotels_between_tripadvisor_and_asiatravel_by_city(country_name, city, options.merge({offset: offset, total: total_hotelsA_count})) 
+		end
 	end
 
 	def self.match_hotels_between_tripadvisor_and_asiatravel_by_city country_name, city_name, *args
+		args << {} unless args.last.instance_of?(Hash)
+		options = args.last
+
 		hotelsA = Hotel.where(tag: 'asiatravel').city(city_name)
 		hotelsB = Hotel.where(tag: 'tripadvisor').city(city_name)
 		hotelsB = Hotel.where(tag: 'tripadvisor').city(country_name) if hotelsB.empty?
+		offset = options[:offset] ? options[:offset] : 0
+		total = options[:total] ? options[:total] : hotelsA.size
 		# File.open("similarity.log", "w") { |file| file.puts "start:" }
 		hotelsA.each do |hotelA|
 			result = hotelA.match_hotels_from_other_tag(hotelsB, *args)
 			matched_hotel = result[0]
 			similarity = result[1]
+			offset += 1
 			File.open("similarity.log", "a+") do |file|
-				file.puts "the most hotel similar to (#{hotelA.name}) is (#{matched_hotel.name}), similarity is #{similarity}"
+				file.puts "#{offset} of #{total}: the most hotel similar to (#{hotelA.name}) is (#{matched_hotel.name}), similarity is #{similarity}"
 				file.puts "    #{hotelA.name}: #{hotelA.format_address.blank? ? hotelA.street_address : hotelA.format_address}"
 				file.puts "    #{matched_hotel.name}: #{hotelA.format_address.blank? ? matched_hotel.street_address : matched_hotel.format_address}"
 				file.puts "    distance is #{GeocodingApi.get_distance(hotelA.location['lat'].to_f, hotelA.location['lng'].to_f, matched_hotel.location['latlng'][0]['lat'], matched_hotel.location['latlng'][0]['lng'])}"
@@ -123,7 +135,7 @@ class Hotel < ActiveRecord::Base
 			end
 		end
 		# self.kuhn_munkres(hotelsA, hotelsB)
-		true
+		hotelsA.count
 	end
 
 	def get_similarity_table_of hotels
@@ -292,7 +304,10 @@ class Hotel < ActiveRecord::Base
 			a_nums.each do |an|
 				next if options[:ingore_num].include?(an)
 				b_nums.each do |bn|
-					similarity += 0.1 * an.to_s.size if an == bn
+					if an == bn
+						similarity += 0.1 * an.to_s.size
+						break
+					end
 				end
 			end
 		end
