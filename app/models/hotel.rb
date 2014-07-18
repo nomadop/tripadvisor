@@ -11,6 +11,16 @@ class Hotel < ActiveRecord::Base
 	default_scope { order(:created_at) }
 	has_many :reviews, dependent: :destroy
 
+	def remove_postal_code_from_address range
+		nums = format_address.scan(/(\d+)/).map{|x| x[0]}
+		nums.each do |num|
+			if range.include?(num)
+				self.format_address = format_address.gsub(Regexp.new(num), '')
+			end
+		end
+		self.save
+	end
+
 	def to_l
 		{
 			street: street_address ? street_address : format_address,
