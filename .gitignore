@@ -13,4 +13,6 @@ config/database.yml
 
 config/database_postgres.yml
 
+config/schedule.rb
+
 db/schema.rb
