@@ -8,6 +8,8 @@ class Hotel < ActiveRecord::Base
 	serialize :traveler_rating, Hash
 	serialize :rating_summary, Hash
 	scope :city, ->(city_name){ where("location like ?", "%#{city_name}%") }
+	scope :tag1, ->{ where(tag: 'asiatravel') }
+	scope :tag2, ->{ where(tag: 'tripadvisor') }
 	default_scope { order(:created_at) }
 	has_many :reviews, dependent: :destroy
 

@@ -1,0 +1,17 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  job_type: MyString
+  status: 1
+  options: MyText
+  every: 1
+  at: MyString
+
+two:
+  name: MyString
+  job_type: MyString
+  status: 1
+  options: MyText
+  every: 1
+  at: MyString
