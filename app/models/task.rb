@@ -76,5 +76,9 @@ class Task < ActiveRecord::Base
 
 		def init_serialize
 			self.options ||= {}
+			self.options = options.keys.inject({}) do |result, key|
+				result[key.to_sym] = options[key]
+				result
+			end
 		end
 end
