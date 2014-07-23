@@ -12,3 +12,5 @@ tmp/pids/server.pid
 config/database.yml
 
 config/database_postgres.yml
+
+db/schema.rb
