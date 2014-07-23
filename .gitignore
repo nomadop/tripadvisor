@@ -7,7 +7,7 @@ log.txt
 
 *.sqlite3
 
-tmp/pids/server.pid
+tmp/*
 
 config/database.yml
 
