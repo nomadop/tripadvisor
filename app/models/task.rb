@@ -25,6 +25,7 @@ class Task < ActiveRecord::Base
 		Hotel.update_or_create_hotels_from_asiatravel_by_country_code(ccode)
 		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, true, self)
 		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, logger: self)
+	ensure
 		self.update(status: Task::STATUS[:ready])
 	end
 
@@ -44,9 +45,9 @@ class Task < ActiveRecord::Base
 
 	def tripadvisor_log *args, &block
 		if block_given?
-			File.open(log_folder + "/#{self.id}/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
+			File.open(log_folder + "/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
 		else
-			File.open(log_folder + "/#{self.id}/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+			File.open(log_folder + "/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
 		end
 	end
 
