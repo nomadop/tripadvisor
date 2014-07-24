@@ -36,7 +36,6 @@ class Task < ActiveRecord::Base
 			result
 		end
 		match_options ||= {}
-		simi_log(match_options, reset: true)
 		Hotel.update_or_create_hotels_from_asiatravel_by_country_code(ccode)
 		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, true, self)
 		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, match_options.merge(logger: self))
@@ -76,11 +75,11 @@ class Task < ActiveRecord::Base
 	end
 
 	def simi_log *args, &block
-		log(log_folder + '/' + Time.now.strftime("%y%m%d") + '_simi.log', *args, &block)
+		log(log_folder + "/simi_#{Time.now.strftime("%y%m%d")}.log", *args, &block)
 	end
 
 	def tripadvisor_log *args, &block
-		log(log_folder + '/' + Time.now.strftime("%y%m%d") + '_tripadvisor.log', *args, &block)
+		log(log_folder + "/tripadvisor_#{Time.now.strftime("%y%m%d")}.log", *args, &block)
 	end
 
 	def log_list

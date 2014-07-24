@@ -104,7 +104,7 @@ class Hotel < ActiveRecord::Base
 	def self.match_hotels_between_tripadvisor_and_asiatravel_by_country country_name, *args
 		args << {} unless args.last.instance_of?(Hash)
 		options = args.last
-		options[:logger] = self if options[:logger] == nil
+		options[:logger] = Hotel if options[:logger] == nil
 
 		options[:logger].simi_log(reset: true, level: :info) {|file| file.puts "start:"}
 
@@ -116,7 +116,7 @@ class Hotel < ActiveRecord::Base
 		end
 	end
 
-	def log log_file, *args, &block
+	def self.log log_file, *args, &block
 		if block_given?
 			File.open(log_file, args[0] && args[0][:reset] ? "w" : "a+", &block)
 		else
@@ -124,11 +124,11 @@ class Hotel < ActiveRecord::Base
 		end
 	end
 
-	def simi_log *args, &block
+	def self.simi_log *args, &block
 		log(Dir.pwd + "/log/similarity.log", *args, &block)
 	end
 
-	def tripadvisor_log *args, &block
+	def self.tripadvisor_log *args, &block
 		log(Dir.pwd + "/log/tripadvisor.log", *args, &block)
 	end
 
