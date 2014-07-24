@@ -36,7 +36,7 @@ class Task < ActiveRecord::Base
 			result
 		end
 		match_options ||= {}
-		simi_log(match_options, true)
+		simi_log(match_options, reset: true)
 		Hotel.update_or_create_hotels_from_asiatravel_by_country_code(ccode)
 		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, true, self)
 		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, match_options.merge(logger: self))
