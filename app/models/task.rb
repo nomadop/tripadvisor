@@ -12,6 +12,8 @@ class Task < ActiveRecord::Base
 		running: 1
 	}
 
+	APP_DIR = Dir.pwd
+
 	def get_and_match_hotels
 		unless status == Task::STATUS[:running]
 			self.update(status: Task::STATUS[:running]) 
@@ -28,20 +30,28 @@ class Task < ActiveRecord::Base
 
 	ACCEPTABLE_JOB_TYPES = Task.instance_methods(false).map(&:to_s)
 
+	def log_folder
+		Task::APP_DIR + "/log/tasks/#{self.id}"
+	end
+
 	def simi_log *args, &block
 		if block_given?
-			File.open(Dir.pwd + "/log/tasks/#{self.id}/#{Time.now.strftime("%y%m%d")}_simi.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
+			File.open(log_folder + "/#{Time.now.strftime("%y%m%d")}_simi.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
 		else
-			File.open(Dir.pwd + "/log/tasks/#{self.id}/#{Time.now.strftime("%y%m%d")}_simi.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+			File.open(log_folder + "/#{Time.now.strftime("%y%m%d")}_simi.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
 		end
 	end
 
 	def tripadvisor_log *args, &block
 		if block_given?
-			File.open(Dir.pwd + "/log/tasks/#{self.id}/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
+			File.open(log_folder + "/#{self.id}/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
 		else
-			File.open(Dir.pwd + "/log/tasks/#{self.id}/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+			File.open(log_folder + "/#{self.id}/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
 		end
+	end
+
+	def log_list
+		Dir.entries(log_folder)[2..-1]
 	end
 
 	def whenever_reset
@@ -60,26 +70,24 @@ class Task < ActiveRecord::Base
 
 	private
 		def init_log_folder
-			app_dir = Dir.pwd
 			Dir.chdir 'log'
 			Dir.mkdir 'tasks' unless File.directory? 'tasks'
 			Dir.chdir 'tasks'
 			Dir.mkdir "#{self.id}"
 		ensure
-			Dir.chdir app_dir
+			Dir.chdir Task::APP_DIR
 		end
 
 		def remove_log_folder
-			app_dir = Dir.pwd
 			Dir.chdir 'log/tasks'
 			system("rm -f #{self.id}/*")
 			Dir.rmdir "#{self.id}"
 		ensure
-			Dir.chdir app_dir
+			Dir.chdir Task::APP_DIR
 		end
 
 		def whenever_add
-			File.open(Dir.pwd + "/config/schedule.rb", "a+") do |file|
+			File.open(Task::APP_DIR + "/config/schedule.rb", "a+") do |file|
 				file.puts ""
 				file.puts "# cronjob for task #{self.id}: #{self.name}"
 				file.puts "every #{self.every}, at: '#{self.at}' do"
@@ -90,7 +98,6 @@ class Task < ActiveRecord::Base
 		end
 
 		def whenever_remove
-			app_dir = Dir.pwd
 			Dir.chdir('config')
 			%x[mv schedule.rb schedule.rb.old]
 			output = File.open("schedule.rb", "w")
@@ -106,7 +113,7 @@ class Task < ActiveRecord::Base
 		ensure
 			output.close
 			%x[rm schedule.rb.old]
-			Dir.chdir(app_dir)
+			Dir.chdir(Task::APP_DIR)
 			system('whenever -iw')
 		end
 

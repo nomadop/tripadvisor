@@ -30,5 +30,14 @@
   <%= @task.at %>
 </p>
 
+<p>
+  <strong>Log:</strong>
+  <ul>
+    <% @task.log_list.each do |log| %>
+    <li><%= link_to log, log_task_path(@task, file: log) %></li>
+    <% end %>
+  </ul>
+</p>
+
 <%= link_to 'Edit', edit_task_path(@task) %> |
 <%= link_to 'Back', tasks_path %>

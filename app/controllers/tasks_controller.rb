@@ -1,5 +1,9 @@
 class TasksController < ApplicationController
-  before_action :set_task, only: [:show, :edit, :update, :destroy]
+  before_action :set_task, only: [:show, :edit, :update, :destroy, :log]
+
+  def log
+    send_data File.read(@task.log_folder + '/' + params[:file]), filename: params[:file], disposition: 'inline', type: 'text'
+  end
 
   # GET /tasks
   # GET /tasks.json
