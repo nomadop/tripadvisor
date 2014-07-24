@@ -116,20 +116,20 @@ class Hotel < ActiveRecord::Base
 		end
 	end
 
-	def self.simi_log *args, &block
+	def log log_file, *args, &block
 		if block_given?
-			File.open(Dir.pwd + "/log/similarity.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
+			File.open(log_file, args[0] && args[0][:reset] ? "w" : "a+", &block)
 		else
-			File.open(Dir.pwd + "/log/similarity.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+			File.open(log_file, args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
 		end
 	end
 
-	def self.tripadvisor_log *args, &block
-		if block_given?
-			File.open(Dir.pwd + "/log/tripadvisor.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
-		else
-			File.open(Dir.pwd + "/log/tripadvisor.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
-		end
+	def simi_log *args, &block
+		log(Dir.pwd + "/log/similarity.log", *args, &block)
+	end
+
+	def tripadvisor_log *args, &block
+		log(Dir.pwd + "/log/tripadvisor.log", *args, &block)
 	end
 
 	def self.match_hotels_between_tripadvisor_and_asiatravel_by_city country_name, city_name, *args

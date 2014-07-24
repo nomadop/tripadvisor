@@ -35,24 +35,24 @@ class Task < ActiveRecord::Base
 		Task::APP_DIR + "/log/tasks/#{self.id}"
 	end
 
-	def simi_log *args, &block
+	def log log_file, *args, &block
 		if block_given?
-			File.open(log_folder + "/#{Time.now.strftime("%y%m%d")}_simi.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
+			File.open(log_file, args[0] && args[0][:reset] ? "w" : "a+", &block)
 		else
-			File.open(log_folder + "/#{Time.now.strftime("%y%m%d")}_simi.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+			File.open(log_file, args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
 		end
+	end
+
+	def simi_log *args, &block
+		log(log_folder + '/' + Time.now.strftime("%y%m%d") + '_simi.log', *args, &block)
 	end
 
 	def tripadvisor_log *args, &block
-		if block_given?
-			File.open(log_folder + "/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
-		else
-			File.open(log_folder + "/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
-		end
+		log(log_folder + '/' + Time.now.strftime("%y%m%d") + '_tripadvisor.log', *args, &block)
 	end
 
 	def log_list
-		Dir.entries(log_folder)[2..-1]
+		Dir.entries(log_folder) - ['..', '.']
 	end
 
 	def whenever_reset
