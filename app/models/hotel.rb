@@ -104,6 +104,9 @@ class Hotel < ActiveRecord::Base
 	def self.match_hotels_between_tripadvisor_and_asiatravel_by_country country_name, *args
 		args << {} unless args.last.instance_of?(Hash)
 		options = args.last
+		options[:logger] = self if options[:logger] == nil
+
+		options[:logger].simi_log(reset: true) {|file| file.puts "start:"}
 
 		hotels_from_asiatravel = Hotel.where(tag: 'asiatravel').city(country_name)
 		citys = hotels_from_asiatravel.map{ |hotel| hotel.location['City'] }.uniq
@@ -113,22 +116,38 @@ class Hotel < ActiveRecord::Base
 		end
 	end
 
+	def self.simi_log *args, &block
+		if block_given?
+			File.open(Dir.pwd + "/log/similarity.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
+		else
+			File.open(Dir.pwd + "/log/similarity.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+		end
+	end
+
+	def self.tripadvisor_log *args, &block
+		if block_given?
+			File.open(Dir.pwd + "/log/tripadvisor.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
+		else
+			File.open(Dir.pwd + "/log/tripadvisor.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+		end
+	end
+
 	def self.match_hotels_between_tripadvisor_and_asiatravel_by_city country_name, city_name, *args
 		args << {} unless args.last.instance_of?(Hash)
 		options = args.last
+		options[:logger] = self if options[:logger] == nil
 
 		hotelsA = Hotel.where(tag: 'asiatravel').city(city_name)
 		hotelsB = Hotel.where(tag: 'tripadvisor').city(city_name)
 		hotelsB = Hotel.where(tag: 'tripadvisor').city(country_name) if hotelsB.empty?
 		offset = options[:offset] ? options[:offset] : 0
 		total = options[:total] ? options[:total] : hotelsA.size
-		# File.open("similarity.log", "w") { |file| file.puts "start:" }
 		hotelsA.each do |hotelA|
 			result = hotelA.match_hotels_from_other_tag(hotelsB, *args)
 			matched_hotel = result[0]
 			similarity = result[1]
 			offset += 1
-			File.open("similarity.log", "a+") do |file|
+			options[:logger].simi_log do |file|
 				file.puts "#{offset} of #{total}: the most hotel similar to (#{hotelA.name}) is (#{matched_hotel.name}), similarity is #{similarity}"
 				file.puts "    #{hotelA.name}: #{hotelA.format_address.blank? ? hotelA.street_address : hotelA.format_address}"
 				file.puts "    #{matched_hotel.name}: #{hotelA.format_address.blank? ? matched_hotel.street_address : matched_hotel.format_address}"
@@ -289,7 +308,7 @@ class Hotel < ActiveRecord::Base
 		options[:address_weight] = 0.5 if options[:address_weight] == nil
 		options[:ingore_num] = "" if options[:ingore_num] == nil
 		if options[:debug]
-			File.open("similarity.log", "a+") do |file|
+			options[:logger].simi_log do |file|
 				file.puts options
 			end
 		end
@@ -536,20 +555,20 @@ class Hotel < ActiveRecord::Base
 		return hotel
 	end
 
-	def self.update_or_create_hotels_by_city_name_from_tripadvisor city_name, load_reviews
-		File.open("log.txt", "w") { |file| file.puts "start mission: update_or_create_hotels_by_city_name_from_tripadvisor(#{city_name}, load_reviews)" }
-		hotel_infos = TripadvisorCrawler.get_hotel_infos_by_city_name(city_name, load_reviews)
+	def self.update_or_create_hotels_by_city_name_from_tripadvisor city_name, load_reviews, logger = Hotel
+		logger.tripadvisor_log(reset: true) { |file| file.puts "start mission: update_or_create_hotels_by_city_name_from_tripadvisor(#{city_name}, #{load_reviews})" }
+		hotel_infos = TripadvisorCrawler.get_hotel_infos_by_city_name(city_name, load_reviews: load_reviews, logger: logger)
 		hotel_infos.map do |hotel_info|
 			update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info)
 		end
 	end
 
-	def self.update_or_create_hotels_by_country_name_from_tripadvisor country_name, load_reviews, ignore_citys = []
-		File.open("log.txt", "w") { |file| file.puts "start mission: update_or_create_hotels_by_country_name_from_tripadvisor(#{country_name}, load_reviews)" }
-		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name, ignore_list: ignore_citys)
+	def self.update_or_create_hotels_by_country_name_from_tripadvisor country_name, load_reviews, logger = Hotel, ignore_citys = []
+		logger.tripadvisor_log(reset: true) { |file| file.puts "start mission: update_or_create_hotels_by_country_name_from_tripadvisor(#{country_name}, #{load_reviews})" }
+		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name, ignore_list: ignore_citys, logger: logger)
 		# task = Thread.new {}
 		city_urls.inject([]) do |result, city_url|
-			hotel_infos = TripadvisorCrawler.get_all_infos_by_geourl(city_url, load_reviews: load_reviews)
+			hotel_infos = TripadvisorCrawler.get_all_infos_by_geourl(city_url, load_reviews: load_reviews, logger: logger)
 			# task.join
 			# task = Thread.new do
 			result += hotel_infos.map { |hotel_info| update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info) }

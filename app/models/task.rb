@@ -1,8 +1,7 @@
 class Task < ActiveRecord::Base
 	before_create :check_job_type
-	after_create :whenever_add
-	after_destroy :whenever_remove
-	after_update { whenever_remove; whenever_add }
+	after_create { whenever_add; init_log_folder }
+	after_destroy { whenever_remove; remove_log_folder }
 	after_initialize :init_serialize
 
 	serialize :options, Hash
@@ -22,13 +21,36 @@ class Task < ActiveRecord::Base
 		cname = options[:cname]
 		ccode = options[:ccode]
 		Hotel.update_or_create_hotels_from_asiatravel_by_country_code(ccode)
-		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, true)
-		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname)
+		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, true, self)
+		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, logger: self)
 		self.update(status: Task::STATUS[:ready])
 	end
 
+	ACCEPTABLE_JOB_TYPES = Task.instance_methods(false).map(&:to_s)
+
+	def simi_log *args, &block
+		if block_given?
+			File.open(Dir.pwd + "/log/tasks/#{self.id}/#{Time.now.strftime("%y%m%d")}_simi.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
+		else
+			File.open(Dir.pwd + "/log/tasks/#{self.id}/#{Time.now.strftime("%y%m%d")}_simi.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+		end
+	end
+
+	def tripadvisor_log *args, &block
+		if block_given?
+			File.open(Dir.pwd + "/log/tasks/#{self.id}/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[0] && args[0][:reset] ? "w" : "a+", &block)
+		else
+			File.open(Dir.pwd + "/log/tasks/#{self.id}/#{Time.now.strftime("%y%m%d")}_tripadvisor.log", args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+		end
+	end
+
+	def whenever_reset
+		whenever_remove
+		whenever_add
+	end
+
 	def self.job_types
-		Task.instance_methods(false).map(&:to_s)
+		Task::ACCEPTABLE_JOB_TYPES
 	end
 
 	def self.run id
@@ -37,6 +59,25 @@ class Task < ActiveRecord::Base
 	end
 
 	private
+		def init_log_folder
+			app_dir = Dir.pwd
+			Dir.chdir 'log'
+			Dir.mkdir 'tasks' unless File.directory? 'tasks'
+			Dir.chdir 'tasks'
+			Dir.mkdir "#{self.id}"
+		ensure
+			Dir.chdir app_dir
+		end
+
+		def remove_log_folder
+			app_dir = Dir.pwd
+			Dir.chdir 'log/tasks'
+			system("rm -f #{self.id}/*")
+			Dir.rmdir "#{self.id}"
+		ensure
+			Dir.chdir app_dir
+		end
+
 		def whenever_add
 			File.open(Dir.pwd + "/config/schedule.rb", "a+") do |file|
 				file.puts ""

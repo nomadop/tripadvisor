@@ -6,7 +6,7 @@ class HotelsController < ApplicationController
 
   def match_hotels_between_tripadvisor_and_asiatravel_by_country
     begin
-      File.open("similarity.log", "w") { |file| file.puts "start:" }
+      Hotel.simi_log(true) { |file| file.puts "start:" }
       args = params[:args].blank? ? nil : JSON.parse(params[:args])
       if args
         args.keys.each do |k|
