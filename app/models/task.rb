@@ -12,6 +12,15 @@ class Task < ActiveRecord::Base
 		running: 1
 	}
 
+	LOG_LEVEL = :info
+
+	LOG_LEVELS = {
+		debug: 0,
+		info: 1,
+		warning: 2,
+		error: 3
+	}
+
 	APP_DIR = Dir.pwd
 
 	def get_and_match_hotels
@@ -26,7 +35,7 @@ class Task < ActiveRecord::Base
 		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, true, self)
 		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, logger: self)
 	rescue Exception => e
-		log(log_folder + '/error.log') do |file|
+		error_log do |file|
 			file.puts "[#{Time.now}] #{e.inspect}:"
 			file.puts e.backtrace
 		end
@@ -41,11 +50,21 @@ class Task < ActiveRecord::Base
 	end
 
 	def log log_file, *args, &block
-		if block_given?
-			File.open(log_file, args[0] && args[0][:reset] ? "w" : "a+", &block)
-		else
-			File.open(log_file, args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+		args << {} unless args.last.instance_of?(Hash)
+		options = args.last
+		options[:level] = :debug if options[:level] == nil
+
+		if Task::LOG_LEVELS[options[:level]] >= Task::LOG_LEVELS[Task::LOG_LEVEL]
+			if block_given?
+				File.open(log_file, options[:reset] ? "w" : "a+", &block)
+			else
+				File.open(log_file, options[:reset] ? "w" : "a+") {|file| file.puts args[0]}
+			end
 		end
+	end
+
+	def error_log *args, &block
+		log(log_folder + '/error.log', *args, &block)
 	end
 
 	def simi_log *args, &block

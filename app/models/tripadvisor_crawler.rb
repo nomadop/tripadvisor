@@ -50,16 +50,18 @@ class TripadvisorCrawler
 				end
 			rescue Exception => e
 				p e
-				logger.tripadvisor_log "Got review failed at #{url}! Error: #{e.inspect}"
+				logger.tripadvisor_log "Got review failed at #{url}! Error: #{e.inspect}", level: :error
 			end
 			result
 		end
 	rescue Faraday::TimeoutError => e
-		logger.tripadvisor_log "Timeout when Got hotel_reviews from #{url.split('/').last}, retry:", 'WARNING'
+		logger.tripadvisor_log "Timeout when Got hotel_reviews from #{url.split('/').last}, retry:", level: :warning
 		get_hotel_reviews_by_hotelurl(url, conn)
 	rescue Exception => e
-		p e
-		p e.backtrace
+		logger.tripadvisor_log(level: :error) do |file|
+			file.puts e.inspect
+			file.puts e.backtrace
+		end
 		return nil
 	end
 
@@ -68,7 +70,7 @@ class TripadvisorCrawler
 		options = args.last
 		options[:lang] = 'zhCN' if options[:lang] == nil
 
-		options[:logger].tripadvisor_log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} start: get_hotel_info_by_hotelurl(#{url.split('/').last})"
+		options[:logger].tripadvisor_log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} start: get_hotel_info_by_hotelurl(#{url.split('/').last})", level: :info
 
 		begin
 			conn = get_conn
@@ -175,7 +177,7 @@ class TripadvisorCrawler
 			options[:logger].tripadvisor_log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} finish: get_hotel_info_by_hotelurl(#{url.split('/').last})"
 			return hotel_info
 		rescue Faraday::TimeoutError => e
-			options[:logger].tripadvisor_log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} WARNING: Timeout when Got hotel_info from #{url.split('/').last}, retry:", 'WARNING'
+			options[:logger].tripadvisor_log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} WARNING: Timeout when Got hotel_info from #{url.split('/').last}, retry:", level: :warning
 			get_hotel_info_by_hotelurl(url, *args)
 		rescue Exception => e
 			p e
@@ -186,7 +188,7 @@ class TripadvisorCrawler
 				retry_count = 0
 			end
 			args[0][:retry_count] = retry_count + 1
-			options[:logger].tripadvisor_log "Got hotel_info failed at #{url.split('/').last}! retry: #{retry_count}!\n Error: #{e.inspect}, #{e.backtrace}", 'ERROR'
+			options[:logger].tripadvisor_log "Got hotel_info failed at #{url.split('/').last}! retry: #{retry_count}!\n Error: #{e.inspect}, #{e.backtrace}", level: :error
 			if retry_count <= 3
 				get_hotel_info_by_hotelurl(url, *args)
 			else
@@ -209,7 +211,7 @@ class TripadvisorCrawler
 		options = args.last
 		options[:load_reviews] = true if options[:load_reviews] == nil
 
-		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_geourl(#{url.split('/').last})"
+		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_geourl(#{url.split('/').last})", level: :info
 
 		# puts options
 
@@ -226,7 +228,7 @@ class TripadvisorCrawler
 		doc.css('#ACCOM_OVERVIEW .listing').each do |hotel|
 			hotel_urls << TripadvisorCrawler::URL + hotel.css('.quality a:first')[0]['href']
 		end
-		options[:logger].tripadvisor_log "    got #{count} hotels"
+		options[:logger].tripadvisor_log "    got #{count} hotels", level: :info
 		if options[:only_count] == true
 			return count
 		end
@@ -266,7 +268,7 @@ class TripadvisorCrawler
 		tasks.each { |t| t.join }
 		return hotel_infos
 	rescue Faraday::TimeoutError => e
-		options[:logger].tripadvisor_log "Timeout when Got hotel_infos from #{url.split('/').last}, retry:", 'WARNING'
+		options[:logger].tripadvisor_log "Timeout when Got hotel_infos from #{url.split('/').last}, retry:", level: :warning
 		get_hotel_infos_by_geourl(url, options)
 	rescue Exception => e
 		p e
@@ -289,7 +291,7 @@ class TripadvisorCrawler
 		options = args.last
 		options[:load_reviews] = true if options[:load_reviews] == nil
 
-		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_city_name(#{city_name})"
+		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_city_name(#{city_name})", level: :info
 
 		query = {
 			action: 'API',
@@ -334,8 +336,7 @@ class TripadvisorCrawler
 		options = args.last
 		options[:ignore_list] = [] if options[:ignore_list] == nil
 
-		MyLogger.log "#{options}", "DEBUG"
-		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_country_name(#{country_name})"
+		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_country_name(#{country_name})", level: :info
 
 		query = {
 			action: 'API',
@@ -365,7 +366,7 @@ class TripadvisorCrawler
 			city_urls += doc.css('.geo_name a').map { |a| a['href'] unless options[:ignore_list].include?(a.content[0...-7]) }
 		end
 		city_urls.delete(nil)
-		options[:logger].tripadvisor_log "    got #{city_urls.count} citys"
+		options[:logger].tripadvisor_log "    got #{city_urls.count} citys", level: :info
 		city_urls
 	rescue Faraday::TimeoutError => e
 		get_city_urls_by_country_name(country_name)
