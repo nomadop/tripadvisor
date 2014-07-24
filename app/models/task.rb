@@ -35,9 +35,11 @@ class Task < ActiveRecord::Base
 		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, true, self)
 		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, logger: self)
 	rescue Exception => e
-		error_log do |file|
-			file.puts "[#{Time.now}] #{e.inspect}:"
-			file.puts e.backtrace
+		error_log(level: :error) do |file|
+			file.puts "#{e.inspect}:"
+			e.backtrace.each do |line|
+				file.puts "    #{line}"
+			end
 		end
 	ensure
 		self.update(status: Task::STATUS[:ready])

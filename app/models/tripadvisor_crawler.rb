@@ -56,11 +56,13 @@ class TripadvisorCrawler
 		end
 	rescue Faraday::TimeoutError => e
 		logger.tripadvisor_log "Timeout when Got hotel_reviews from #{url.split('/').last}, retry:", level: :warning
-		get_hotel_reviews_by_hotelurl(url, conn)
+		get_hotel_reviews_by_hotelurl(url, conn, logger)
 	rescue Exception => e
 		logger.tripadvisor_log(level: :error) do |file|
-			file.puts e.inspect
-			file.puts e.backtrace
+			file.puts "#{e.inspect}:"
+			e.backtrace.each do |line|
+				file.puts "    #{line}"
+			end
 		end
 		return nil
 	end
