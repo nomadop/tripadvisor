@@ -371,7 +371,7 @@ class TripadvisorCrawler
 		options[:logger].tripadvisor_log "    got #{city_urls.count} citys", level: :info
 		city_urls
 	rescue Faraday::TimeoutError => e
-		get_city_urls_by_country_name(country_name)
+		get_city_urls_by_country_name(country_name, *args)
 	end
 
 end
