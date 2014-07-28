@@ -36,7 +36,7 @@ class GeocodingApi
 			response = conn.get("/REST/v1/Locations?q=#{location}&inclnb=0&incl=queryParse,ciso2&maxResults=10&key=#{GeocodingApi::BING_MAPS_APIKEY}")
 		when 'google'
 			conn = Conn.init('http://maps.googleapis.com')
-			conn.options.proxy = "http://127.0.0.1:8087/"
+			# conn.options.proxy = "http://127.0.0.1:8087/"
 			conn.params = {
 				address: location,
 				sensor: false
