@@ -52,3 +52,5 @@ gem 'thin'
 gem 'kaminari'
 
 gem 'whenever', :require => false
+
+gem 'geokit', git: 'https://github.com/geokit/geokit.git'

@@ -1,6 +1,7 @@
 class GeocodingApi
 	MAPQUEST_APIKEY = 'Fmjtd%7Cluur206y2q%2Crw%3Do5-9ay2dy'
 	BING_MAPS_APIKEY = 'Ao9yUqipvyK9Gyt1jZEiolDPDNQ4evUSSKlvUN7t0rx0iiD-u9uMNeHsojrRyNVY'
+	GOOGLE_APIKEY = 'AIzaSyAXngIRBBzOVy_k9OIjEn9rW33FPCEJ6C0'
 
 	def self.rad angle
 		angle * Math::PI / 180.0
@@ -33,6 +34,14 @@ class GeocodingApi
 			# 	key: GeocodingApi::BING_MAPS_APIKEY
 			# }
 			response = conn.get("/REST/v1/Locations?q=#{location}&inclnb=0&incl=queryParse,ciso2&maxResults=10&key=#{GeocodingApi::BING_MAPS_APIKEY}")
+		when 'google'
+			conn = Conn.init('http://maps.googleapis.com')
+			conn.options.proxy = "http://127.0.0.1:8087/"
+			conn.params = {
+				address: location,
+				sensor: false
+			}
+			response = conn.get('/maps/api/geocode/json')
 		end
 		JSON.parse(response.body)
 	rescue Faraday::TimeoutError => e
@@ -50,6 +59,9 @@ class GeocodingApi
 				coord = resource['point']['coordinates']
 				{'lat' => coord[0], 'lng' => coord[1]}
 			end
+		when 'google'
+			geo_res = geocode(location, api)['results']
+			geo_res[0]['geometry']['location']
 		end
 	end
 end

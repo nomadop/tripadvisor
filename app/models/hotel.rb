@@ -12,6 +12,15 @@ class Hotel < ActiveRecord::Base
 	scope :tag2, ->{ where(tag: 'tripadvisor') }
 	default_scope { order(:created_at) }
 	has_many :reviews, dependent: :destroy
+	belongs_to :city
+
+	def address *args
+		args << {} unless args.last.instance_of?(Hash)
+		options = args.last
+
+		address = format_address || street_address
+		address.gsub!(/\b(d{5})\b/, '') if options[:no_post] == true
+	end
 
 	def remove_postal_code_from_address range
 		nums = format_address.scan(/\b(\d{5})\b/).map{|x| x[0]}
@@ -117,10 +126,13 @@ class Hotel < ActiveRecord::Base
 	end
 
 	def self.log log_file, *args, &block
+		args << {} unless args.last.instance_of?(Hash)
+		options = args.last
+
 		if block_given?
-			File.open(log_file, args[0] && args[0][:reset] ? "w" : "a+", &block)
+			File.open(log_file, options[:reset] ? "w" : "a+", &block)
 		else
-			File.open(log_file, args[1] && args[1][:reset] ? "w" : "a+") {|file| file.puts args[0]}
+			File.open(log_file, options[:reset] ? "w" : "a+") {|file| file.puts "[#{Time.now}] #{args[0]}"}
 		end
 	end
 
@@ -148,7 +160,7 @@ class Hotel < ActiveRecord::Base
 			similarity = result[1]
 			offset += 1
 			options[:logger].simi_log(level: :info) do |file|
-				file.puts "#{offset} of #{total}: the most hotel similar to (#{hotelA.name}) is (#{matched_hotel.name}), similarity is #{similarity}"
+				file.puts "[#{Time.now.strftime("%H:%M:%S")}] #{offset} of #{total}: the most hotel similar to (#{hotelA.name}) is (#{matched_hotel.name}), similarity is #{similarity}"
 				file.puts "    #{hotelA.name}: #{hotelA.format_address.blank? ? hotelA.street_address : hotelA.format_address}"
 				file.puts "    #{matched_hotel.name}: #{hotelA.format_address.blank? ? matched_hotel.street_address : matched_hotel.format_address}"
 				file.puts "    distance is #{GeocodingApi.get_distance(hotelA.location['lat'].to_f, hotelA.location['lng'].to_f, matched_hotel.location['latlng'][0]['lat'], matched_hotel.location['latlng'][0]['lng'])}"
@@ -159,144 +171,130 @@ class Hotel < ActiveRecord::Base
 		hotelsA.count
 	end
 
-	def get_similarity_table_of hotels
-		hotels.map do |h|
-			[h.name, Hotel.similarity(self, h), h.format_address]
-		end
-	end
+	# def self.kuhn_munkres hotelsA, hotelsB, simi_table = nil
+	# 	raise "M must be smaller than N" if hotelsA.size > hotelsB.size
+	# 	s = []
+	# 	t = []
+	# 	l1 = []
+	# 	l2 = []
+	# 	inf = 1000000000
+	# 	simi_table ||= get_similarity_table(hotelsA, hotelsB)
+	# 	m_table = hotelsA.map(&:id)
+	# 	m = m_table.size
+	# 	n_table = hotelsB.map(&:id)
+	# 	n = n_table.size
+	# 	m_n_table = m_table.map do |m|
+	# 		n_table.map { |n| (simi_table[m][n] * 100).round(0) }
+	# 	end
+	# 	for i in (0...m) do
+	# 		l1[i] = -inf
+	# 		for j in (0...n) do
+	# 			l1[i] = m_n_table[i][j] > l1[i] ? m_n_table[i][j] : l1[i]
+	# 		end
+	# 		return false if l1[i] == -inf
+	# 	end
+	# 	for i in (0...n) do
+	# 		l2[i] = 0
+	# 	end
+	# 	match1 = []
+	# 	match2 = []
+	# 	m.times { |i| match1[i] = -1 }
+	# 	n.times { |i| match2[i] = -1 }
+	# 	i = 0
+	# 	while i < m
+	# 		t = []
+	# 		n.times { |j| t[j] = -1 }
+	# 		p = 0
+	# 		q = 0
+	# 		s[0] = i
+	# 		while p <= q && match1[i] < 0
+	# 			k = s[p]
+	# 			# puts "#{p}: k=#{k}" if i == 109
+	# 			j = 0
+	# 			while j < n
+	# 				# puts "j=#{j}: s=#{s}, l1[k]=#{l1[k]}, l2[j]=#{l2[j]}, mnt[k,j]=#{m_n_table[k][j]}, t[j]=#{t[j]}" if i == 109
+	# 				break unless match1[i] < 0
+	# 				if l1[k] + l2[j] == m_n_table[k][j] && t[j] < 0
+	# 					q += 1
+	# 					s[q] = match2[j]
+	# 					t[j] = k
+	# 					# puts "q=#{q}, s[q]=#{s[q]}, t[j]=#{t[j]}, m2[j]=#{match2[j]}" if i == 109
+	# 					if s[q] < 0
+	# 						p = j
+	# 						while p >= 0
+	# 							match2[j] = k = t[j]
+	# 							p = match1[k]
+	# 							match1[k] = j
+	# 							# puts "p=#{p}, k=#{k}, j=#{j}" if i == 109 || match2[j] == 281
+	# 							j = p
+	# 						end
+	# 					end
+	# 				end
+	# 				j += 1
+	# 			end
+	# 			p += 1
+	# 		end
+	# 		if match1[i] < 0
+	# 			i -= 1
+	# 			p = inf
+	# 			for k in (0..q) do
+	# 				for j in (0...n) do
+	# 					p = l1[s[k]] + l2[j] - m_n_table[s[k]][j] if t[j] < 0 && l1[s[k]] + l2[j] - m_n_table[s[k]][j] < p
+	# 				end
+	# 			end
+	# 			for j in (0...n) do
+	# 				l2[j] += t[j] < 0 ? 0 : p
+	# 			end
+	# 			for k in (0..q) do
+	# 				l1[s[k]] -= p
+	# 			end
+	# 	  	File.open("km_result.txt", "a+") { |file| file.puts "i=#{i}, p=#{p}" }
+	# 		end
+	# 		i += 1
+	# 	end
+	# 	#return match1
+	# 	File.open('km_result.txt', 'w') do |file|
+	# 		match1.each_with_index do |n, m|
+	# 			if n >= 0
+	# 				hotelA = Hotel.find(m_table[m])
+	# 				hotelB = Hotel.find(n_table[n])
+	# 				hotelA.matched_hotel = hotelB
+	# 				hotelB.matched_hotel = hotelA
+	# 			else
+	# 				file.puts "Can not find match of hotel(#{hotelA.name})"
+	# 			end
+	# 			file.puts "=" * 100
+	# 		end
+	# 	end
+	# end
 
-	def self.get_similarity_table_of hotel, hotels
-		hotel = Hotel.find_by(name: hotel) if hotel.instance_of? String
-		hotel.get_similarity_table_of(hotels)
-	end
-
-	def self.kuhn_munkres hotelsA, hotelsB, simi_table = nil
-		raise "M must be smaller than N" if hotelsA.size > hotelsB.size
-		s = []
-		t = []
-		l1 = []
-		l2 = []
-		inf = 1000000000
-		simi_table ||= get_similarity_table(hotelsA, hotelsB)
-		m_table = hotelsA.map(&:id)
-		m = m_table.size
-		n_table = hotelsB.map(&:id)
-		n = n_table.size
-		m_n_table = m_table.map do |m|
-			n_table.map { |n| (simi_table[m][n] * 100).round(0) }
-		end
-		for i in (0...m) do
-			l1[i] = -inf
-			for j in (0...n) do
-				l1[i] = m_n_table[i][j] > l1[i] ? m_n_table[i][j] : l1[i]
-			end
-			return false if l1[i] == -inf
-		end
-		for i in (0...n) do
-			l2[i] = 0
-		end
-		match1 = []
-		match2 = []
-		m.times { |i| match1[i] = -1 }
-		n.times { |i| match2[i] = -1 }
-		i = 0
-		while i < m
-			t = []
-			n.times { |j| t[j] = -1 }
-			p = 0
-			q = 0
-			s[0] = i
-			while p <= q && match1[i] < 0
-				k = s[p]
-				# puts "#{p}: k=#{k}" if i == 109
-				j = 0
-				while j < n
-					# puts "j=#{j}: s=#{s}, l1[k]=#{l1[k]}, l2[j]=#{l2[j]}, mnt[k,j]=#{m_n_table[k][j]}, t[j]=#{t[j]}" if i == 109
-					break unless match1[i] < 0
-					if l1[k] + l2[j] == m_n_table[k][j] && t[j] < 0
-						q += 1
-						s[q] = match2[j]
-						t[j] = k
-						# puts "q=#{q}, s[q]=#{s[q]}, t[j]=#{t[j]}, m2[j]=#{match2[j]}" if i == 109
-						if s[q] < 0
-							p = j
-							while p >= 0
-								match2[j] = k = t[j]
-								p = match1[k]
-								match1[k] = j
-								# puts "p=#{p}, k=#{k}, j=#{j}" if i == 109 || match2[j] == 281
-								j = p
-							end
-						end
-					end
-					j += 1
-				end
-				p += 1
-			end
-			if match1[i] < 0
-				i -= 1
-				p = inf
-				for k in (0..q) do
-					for j in (0...n) do
-						p = l1[s[k]] + l2[j] - m_n_table[s[k]][j] if t[j] < 0 && l1[s[k]] + l2[j] - m_n_table[s[k]][j] < p
-					end
-				end
-				for j in (0...n) do
-					l2[j] += t[j] < 0 ? 0 : p
-				end
-				for k in (0..q) do
-					l1[s[k]] -= p
-				end
-		  	File.open("km_result.txt", "a+") { |file| file.puts "i=#{i}, p=#{p}" }
-			end
-			i += 1
-		end
-		#return match1
-		File.open('km_result.txt', 'w') do |file|
-			match1.each_with_index do |n, m|
-				if n >= 0
-					hotelA = Hotel.find(m_table[m])
-					hotelB = Hotel.find(n_table[n])
-					file.puts "Hotel(#{hotelA.name}) match hotel(#{hotelB.name}), similarity is #{simi_table[m_table[m]][n_table[n]]}"
-					file.puts "    Hotel(#{hotelA.name}): #{hotelA.format_address.blank? ? hotelA.street_address : hotelA.format_address}"
-					file.puts "    Hotel(#{hotelB.name}): #{hotelA.format_address.blank? ? hotelB.street_address : hotelB.format_address}"
-					# hotelA.matched_hotel = hotelB
-					# hotelB.matched_hotel = hotelA
-				else
-					file.puts "Can not find match of hotel(#{hotelA.name})"
-				end
-				file.puts "=" * 100
-			end
-		end
-	end
-
-	def self.get_similarity_table hotelsA, hotelsB
-		File.open("similarity.log", "w") { |file| file.puts "start:" }
-		hotelsA.inject([]) do |simi_table, hotelA|
-			max_simi = 0
-			most_simi_hotel = nil
-			simi_table[hotelA.id] = hotelsB.inject([]) do |ha_table, hotelB|
-				ha_table[hotelB.id] = similarity(hotelA, hotelB)
-				simi_table[hotelB.id] ||= []
-				simi_table[hotelB.id][hotelA.id] = ha_table[hotelB.id]
-				if ha_table[hotelB.id] > max_simi
-					max_simi = ha_table[hotelB.id]
-					most_simi_hotel = hotelB
-				end
-				ha_table
-			end
-			File.open("similarity.log", "a+") do |file|
-				file.puts "the most hotel similar to (#{hotelA.name}) is (#{most_simi_hotel.name}), similarity is #{max_simi}"
-				file.puts "    #{hotelA.name}: #{hotelA.format_address.blank? ? hotelA.street_address : hotelA.format_address}"
-				file.puts "    #{most_simi_hotel.name}: #{hotelA.format_address.blank? ? most_simi_hotel.street_address : most_simi_hotel.format_address}"
-				file.puts "    distance is #{GeocodingApi.get_distance(hotelA.location['lat'].to_f, hotelA.location['lng'].to_f, most_simi_hotel.location['latlng'][0]['lat'], most_simi_hotel.location['latlng'][0]['lng'])}"
-				file.puts '=' * 100
-			end
-			simi_table.map do |x|
-				x == nil ? [] : x.map { |y| y == nil ? 0 : y }
-			end
-		end
-	end
+	# def self.get_similarity_table hotelsA, hotelsB
+	# 	File.open("similarity.log", "w") { |file| file.puts "start:" }
+	# 	hotelsA.inject([]) do |simi_table, hotelA|
+	# 		max_simi = 0
+	# 		most_simi_hotel = nil
+	# 		simi_table[hotelA.id] = hotelsB.inject([]) do |ha_table, hotelB|
+	# 			ha_table[hotelB.id] = similarity(hotelA, hotelB)
+	# 			simi_table[hotelB.id] ||= []
+	# 			simi_table[hotelB.id][hotelA.id] = ha_table[hotelB.id]
+	# 			if ha_table[hotelB.id] > max_simi
+	# 				max_simi = ha_table[hotelB.id]
+	# 				most_simi_hotel = hotelB
+	# 			end
+	# 			ha_table
+	# 		end
+	# 		File.open("similarity.log", "a+") do |file|
+	# 			file.puts "the most hotel similar to (#{hotelA.name}) is (#{most_simi_hotel.name}), similarity is #{max_simi}"
+	# 			file.puts "    #{hotelA.name}: #{hotelA.format_address || hotelA.street_address}"
+	# 			file.puts "    #{most_simi_hotel.name}: #{hotelA.format_address || most_simi_hotel.street_address}"
+	# 			file.puts "    distance is #{GeocodingApi.get_distance(hotelA.location['lat'].to_f, hotelA.location['lng'].to_f, most_simi_hotel.location['latlng'][0]['lat'], most_simi_hotel.location['latlng'][0]['lng'])}"
+	# 			file.puts '=' * 100
+	# 		end
+	# 		simi_table.map do |x|
+	# 			x == nil ? [] : x.map { |y| y == nil ? 0 : y }
+	# 		end
+	# 	end
+	# end
 
 	def self.similarity hotelA, hotelB, *args
 		args << {} unless args.last.instance_of?(Hash)
@@ -457,6 +455,8 @@ class Hotel < ActiveRecord::Base
 				tag: 'asiatravel'
 				)
 		end
+		city = City.find_or_create_by(name: hotel.location['City'])
+		city.hotels << hotel
 		return hotel
 	end
 
@@ -550,13 +550,15 @@ class Hotel < ActiveRecord::Base
 		if hotel
 			hotel.update(hotel_info)
 		else
-			Hotel.create(hotel_info)
+			hotel = Hotel.create(hotel_info)
 		end
+		city = City.find_or_create_by(name: hotel.location['City'])
+		city.hotels << hotel
 		return hotel
 	end
 
 	def self.update_or_create_hotels_by_city_name_from_tripadvisor city_name, load_reviews, logger = Hotel
-		logger.tripadvisor_log(reset: true, level: :info) { |file| file.puts "start mission: update_or_create_hotels_by_city_name_from_tripadvisor(#{city_name}, #{load_reviews})" }
+		logger.tripadvisor_log("start mission: update_or_create_hotels_by_city_name_from_tripadvisor(#{city_name}, #{load_reviews})", reset: true, level: :info)
 		hotel_infos = TripadvisorCrawler.get_hotel_infos_by_city_name(city_name, load_reviews: load_reviews, logger: logger)
 		hotel_infos.map do |hotel_info|
 			update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info)
@@ -564,7 +566,7 @@ class Hotel < ActiveRecord::Base
 	end
 
 	def self.update_or_create_hotels_by_country_name_from_tripadvisor country_name, load_reviews, logger = Hotel, ignore_citys = []
-		logger.tripadvisor_log(reset: true, level: :info) { |file| file.puts "start mission: update_or_create_hotels_by_country_name_from_tripadvisor(#{country_name}, #{load_reviews})" }
+		logger.tripadvisor_log("start mission: update_or_create_hotels_by_country_name_from_tripadvisor(#{country_name}, #{load_reviews})", reset: true, level: :info)
 		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name, ignore_list: ignore_citys, logger: logger)
 		# task = Thread.new {}
 		city_urls.inject([]) do |result, city_url|

@@ -41,7 +41,7 @@ class Task < ActiveRecord::Base
 		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, match_options.merge(logger: self))
 	rescue Exception => e
 		error_log(level: :error) do |file|
-			file.puts "#{e.inspect}:"
+			file.puts "[#{Time.now}] #{e.inspect}:"
 			e.backtrace.each do |line|
 				file.puts "    #{line}"
 			end
@@ -65,7 +65,7 @@ class Task < ActiveRecord::Base
 			if block_given?
 				File.open(log_file, options[:reset] ? "w" : "a+", &block)
 			else
-				File.open(log_file, options[:reset] ? "w" : "a+") {|file| file.puts args[0]}
+				File.open(log_file, options[:reset] ? "w" : "a+") {|file| file.puts "[#{Time.now.strftime("%H:%M:%S")}] #{args[0]}"}
 			end
 		end
 	end

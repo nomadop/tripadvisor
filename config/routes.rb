@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  resources :cities
+
   resources :tasks do
     member do
       get 'log'
