@@ -17,51 +17,38 @@ class GeocodingApi
 		s.round(6)
 	end
 
-	def self.geocode location, api = 'mapquest'
+	def self.geocode location, api = 'google'
 		case api
 		when 'mapquest'
-			location = {location: location} if location.instance_of? String
-			conn = Conn.init('http://www.mapquestapi.com')
-			conn.params = location
-			response = conn.get("/geocoding/v1/address?key=#{GeocodingApi::MAPQUEST_APIKEY}&inFormat=kvp&outFormat=json")
+			# location = {location: location} if location.instance_of? String
+			# conn = Conn.init('http://www.mapquestapi.com')
+			# conn.params = location
+			# response = conn.get("/geocoding/v1/address?key=#{GeocodingApi::MAPQUEST_APIKEY}&inFormat=kvp&outFormat=json")
+			Geokit::Geocoders::MapQuestGeocoder.key = GeocodingApi::MAPQUEST_APIKEY
+			Geokit::Geocoders::MapQuestGeocoder.geocode location
 		when 'bingmaps'
-			conn = Conn.init('http://dev.virtualearth.net')
-			# conn.params = {
-			# 	q: location,
-			# 	inclnb: 0,
-			# 	incl: 'queryParse,ciso2',
-			# 	maxResults: 10,
-			# 	key: GeocodingApi::BING_MAPS_APIKEY
-			# }
-			response = conn.get("/REST/v1/Locations?q=#{location}&inclnb=0&incl=queryParse,ciso2&maxResults=10&key=#{GeocodingApi::BING_MAPS_APIKEY}")
+			# conn = Conn.init('http://dev.virtualearth.net')
+			# response = conn.get("/REST/v1/Locations?q=#{location}&inclnb=0&incl=queryParse,ciso2&maxResults=10&key=#{GeocodingApi::BING_MAPS_APIKEY}")
+			Geokit::Geocoders::BingGeocoder.key = GeocodingApi::BING_MAPS_APIKEY
+			Geokit::Geocoders::GoogleGeocoder.geocode location
 		when 'google'
-			conn = Conn.init('http://maps.googleapis.com')
-			# conn.options.proxy = "http://127.0.0.1:8087/"
-			conn.params = {
-				address: location,
-				sensor: false
-			}
-			response = conn.get('/maps/api/geocode/json')
+			# conn = Conn.init('http://maps.googleapis.com', ssl: {verify:false}, proxy: 'https://127.0.0.1:8087/')
+			# conn.params = {
+			# 	address: location,
+			# 	sensor: false
+			# }
+			# response = conn.get('/maps/api/geocode/json')
+			# response = conn.get(response.headers['location'])
+			Geokit::Geocoders.proxy = 'https://127.0.0.1:8087/'
+			Geokit::Geocoders::GoogleGeocoder.geocode location
 		end
-		JSON.parse(response.body)
+		# JSON.parse(response.body)
 	rescue Faraday::TimeoutError => e
 		geocode(location, api)
 	end
 
-	def self.get_latlng location, api = 'mapquest'
-		case api
-		when 'mapquest'
-			geo_res = geocode(location, api)['results']
-			geo_res[0]['locations'].map { |location| location['latLng'] }
-		when 'bingmaps'
-			geo_res = geocode(location, api)['resourceSets']
-			geo_res[0]['resources'].map do |resource|
-				coord = resource['point']['coordinates']
-				{'lat' => coord[0], 'lng' => coord[1]}
-			end
-		when 'google'
-			geo_res = geocode(location, api)['results']
-			geo_res[0]['geometry']['location']
-		end
+	def self.get_latlng location, api = 'bingmaps'
+		loc = geocode(location, api)
+		{'lat' => loc.lat, 'lng' => loc.lng}
 	end
 end

@@ -4,10 +4,12 @@ class Conn
 		args << {} unless args.last.instance_of?(Hash)
 		options = args.last
 
-		conn = Faraday.new(:url => url) do |builder|
+		conn_options = options.reject { |key, val| [:adapter, :timeout, :open_timeout].include?(key) }
+
+		conn = Faraday.new(url, conn_options) do |builder|
 			builder.request		:url_encoded
 			builder.response	:logger
-			builder.adapter		Faraday.default_adapter
+			builder.adapter		options[:adapter] || Faraday.default_adapter
 			builder.options.timeout = options[:timeout] || 5           # open/read timeout in seconds
   		builder.options.open_timeout = options[:open_timeout] || 2
 		end

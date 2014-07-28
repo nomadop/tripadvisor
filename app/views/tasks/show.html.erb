@@ -12,7 +12,7 @@
 
 <p>
   <strong>Status:</strong>
-  <%= @task.status %>
+  <%= Task::STATUS.rassoc(@task.status).to_s %>
 </p>
 
 <p>
