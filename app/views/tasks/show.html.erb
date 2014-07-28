@@ -33,7 +33,7 @@
 <p>
   <strong>Log:</strong>
   <ul>
-    <% @task.log_list.each do |log| %>
+    <% @task.log_list.sort.each do |log| %>
     <li><%= link_to log, log_task_path(@task, file: log) %></li>
     <% end %>
   </ul>
