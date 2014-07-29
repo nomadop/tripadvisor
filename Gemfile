@@ -53,7 +53,7 @@ gem 'kaminari'
 
 gem 'whenever', :require => false
 
-gem 'geokit', git: 'https://github.com/geokit/geokit.git'
+gem 'geokit'
 
 gem 'savon', path: 'vendor/gems'
 gem "gyoku", :path=>"vendor/gems"

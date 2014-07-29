@@ -64,7 +64,7 @@ class TripadvisorCrawler
 				file.puts "    #{line}"
 			end
 		end
-		return nil
+		return []
 	end
 
 	def self.get_hotel_info_by_hotelurl url, *args
