@@ -1,0 +1,299 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+<<	lib/savon/wsdl/document_collection.rb	/^      def <<(document)$/;"	f	class:Savon.WSDL.DocumentCollection
+<<	lib/savon/xs/schema_collection.rb	/^      def <<(schema)$/;"	f	class:Savon.XS.SchemaCollection
+All	lib/savon/xs/types.rb	/^    class All            < BaseType; end$/;"	c	class:Savon.XS
+Annotation	lib/savon/xs/types.rb	/^    class Annotation < BaseType$/;"	c	class:Savon.XS
+AnyType	lib/savon/xs/types.rb	/^    class AnyType        < BaseType; end$/;"	c	class:Savon.XS
+Attribute	lib/savon/attribute.rb	/^  class Attribute$/;"	c	class:Savon
+Attribute	lib/savon/xs/types.rb	/^    class Attribute < BaseType$/;"	c	class:Savon.XS
+AttributeGroup	lib/savon/xs/types.rb	/^    class AttributeGroup < BaseType$/;"	c	class:Savon.XS
+BaseType	lib/savon/xs/types.rb	/^    class BaseType$/;"	c	class:Savon.XS
+Binding	lib/savon/wsdl/binding.rb	/^    class Binding$/;"	c	class:Savon.WSDL
+BindingOperation	lib/savon/wsdl/binding_operation.rb	/^    class BindingOperation$/;"	c	class:Savon.WSDL
+Choice	lib/savon/xs/types.rb	/^    class Choice         < BaseType; end$/;"	c	class:Savon.XS
+ComplexContent	lib/savon/xs/types.rb	/^    class ComplexContent < BaseType; end$/;"	c	class:Savon.XS
+ComplexType	lib/savon/xs/types.rb	/^    class ComplexType < PrimaryType$/;"	c	class:Savon.XS
+Document	lib/savon/wsdl/document.rb	/^    class Document$/;"	c	class:Savon.WSDL
+DocumentCollection	lib/savon/wsdl/document_collection.rb	/^    class DocumentCollection$/;"	c	class:Savon.WSDL
+Element	lib/savon/element.rb	/^  class Element$/;"	c	class:Savon
+Element	lib/savon/xs/types.rb	/^    class Element < PrimaryType$/;"	c	class:Savon.XS
+ElementBuilder	lib/savon/element_builder.rb	/^  class ElementBuilder$/;"	c	class:Savon
+Enumeration	lib/savon/xs/types.rb	/^    class Enumeration    < BaseType; end$/;"	c	class:Savon.XS
+Envelope	lib/savon/envelope.rb	/^  class Envelope$/;"	c	class:Savon
+ExampleMessage	lib/savon/example_message.rb	/^  class ExampleMessage$/;"	c	class:Savon
+Extension	lib/savon/xs/types.rb	/^    class Extension < BaseType$/;"	c	class:Savon.XS
+Fixture	spec/support/fixture.rb	/^  class Fixture$/;"	c	class:SpecSupport
+HTTPClient	lib/savon/httpclient.rb	/^  class HTTPClient$/;"	c	class:Savon
+HTTPMock	spec/support/http_mock.rb	/^  class HTTPMock$/;"	c	class:SpecSupport
+Importer	lib/savon/importer.rb	/^  class Importer$/;"	c	class:Savon
+Input	lib/savon/wsdl/input_output.rb	/^    class Input$/;"	c	class:Savon.WSDL
+Message	lib/savon/message.rb	/^  class Message$/;"	c	class:Savon
+Message	lib/savon/wsdl/message.rb	/^    class Message$/;"	c	class:Savon.WSDL
+Operation	lib/savon/operation.rb	/^  class Operation$/;"	c	class:Savon
+Operation	lib/savon/wsdl/operation.rb	/^    class Operation$/;"	c	class:Savon.WSDL
+Output	lib/savon/wsdl/input_output.rb	/^    class Output < Input$/;"	c	class:Savon.WSDL
+Port	lib/savon/wsdl/port.rb	/^    class Port$/;"	c	class:Savon.WSDL
+PortType	lib/savon/wsdl/port_type.rb	/^    class PortType$/;"	c	class:Savon.WSDL
+PortTypeOperation	lib/savon/wsdl/port_type_operation.rb	/^    class PortTypeOperation$/;"	c	class:Savon.WSDL
+PrimaryType	lib/savon/xs/types.rb	/^    class PrimaryType < BaseType$/;"	c	class:Savon.XS
+Resolver	lib/savon/resolver.rb	/^  class Resolver$/;"	c	class:Savon
+Response	lib/savon/response.rb	/^  class Response$/;"	c	class:Savon
+Restriction	lib/savon/xs/types.rb	/^    class Restriction    < BaseType; end$/;"	c	class:Savon.XS
+Savon	lib/savon.rb	/^class Savon$/;"	c
+Savon	lib/savon/attribute.rb	/^class Savon$/;"	c
+Savon	lib/savon/element.rb	/^class Savon$/;"	c
+Savon	lib/savon/element_builder.rb	/^class Savon$/;"	c
+Savon	lib/savon/envelope.rb	/^class Savon$/;"	c
+Savon	lib/savon/errors.rb	/^class Savon$/;"	c
+Savon	lib/savon/example_message.rb	/^class Savon$/;"	c
+Savon	lib/savon/httpclient.rb	/^class Savon$/;"	c
+Savon	lib/savon/importer.rb	/^class Savon$/;"	c
+Savon	lib/savon/message.rb	/^class Savon$/;"	c
+Savon	lib/savon/operation.rb	/^class Savon$/;"	c
+Savon	lib/savon/resolver.rb	/^class Savon$/;"	c
+Savon	lib/savon/response.rb	/^class Savon$/;"	c
+Savon	lib/savon/version.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/binding.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/binding_operation.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/document.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/document_collection.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/input_output.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/message.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/operation.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/port.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/port_type.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/port_type_operation.rb	/^class Savon$/;"	c
+Savon	lib/savon/wsdl/service.rb	/^class Savon$/;"	c
+Savon	lib/savon/xs/schema.rb	/^class Savon$/;"	c
+Savon	lib/savon/xs/schema_collection.rb	/^class Savon$/;"	c
+Savon	lib/savon/xs/types.rb	/^class Savon$/;"	c
+Schema	lib/savon/xs/schema.rb	/^    class Schema$/;"	c	class:Savon.XS
+SchemaCollection	lib/savon/xs/schema_collection.rb	/^    class SchemaCollection$/;"	c	class:Savon.XS
+Sequence	lib/savon/xs/types.rb	/^    class Sequence       < BaseType; end$/;"	c	class:Savon.XS
+Service	lib/savon/wsdl/service.rb	/^    class Service$/;"	c	class:Savon.WSDL
+SimpleContent	lib/savon/xs/types.rb	/^    class SimpleContent < BaseType$/;"	c	class:Savon.XS
+SimpleType	lib/savon/xs/types.rb	/^    class SimpleType < PrimaryType$/;"	c	class:Savon.XS
+SpecSupport	spec/support/fixture.rb	/^module SpecSupport$/;"	m
+SpecSupport	spec/support/http_mock.rb	/^module SpecSupport$/;"	m
+WSDL	lib/savon/wsdl.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/binding.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/binding_operation.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/document.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/document_collection.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/input_output.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/message.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/operation.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/port.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/port_type.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/port_type_operation.rb	/^  class WSDL$/;"	c	class:Savon
+WSDL	lib/savon/wsdl/service.rb	/^  class WSDL$/;"	c	class:Savon
+XS	lib/savon/xs/schema.rb	/^  class XS$/;"	c	class:Savon
+XS	lib/savon/xs/schema_collection.rb	/^  class XS$/;"	c	class:Savon
+XS	lib/savon/xs/types.rb	/^  class XS$/;"	c	class:Savon
+[]	lib/savon/xs/types.rb	/^      def [](key)$/;"	f	class:Savon.XS.BaseType
+absolute_url?	lib/savon/importer.rb	/^    def absolute_url?(location)$/;"	f	class:Savon.Importer
+attribute	lib/savon/xs/schema_collection.rb	/^      def attribute(namespace, name)$/;"	f	class:Savon.XS.SchemaCollection
+attribute_group	lib/savon/xs/schema_collection.rb	/^      def attribute_group(namespace, name)$/;"	f	class:Savon.XS.SchemaCollection
+base	lib/savon/xs/types.rb	/^      def base$/;"	f	class:Savon.XS.SimpleType
+bindings	lib/savon/wsdl/document_collection.rb	/^      def bindings$/;"	f	class:Savon.WSDL.DocumentCollection
+body	lib/savon/response.rb	/^    def body$/;"	f	class:Savon.Response
+body_parts	lib/savon/operation.rb	/^    def body_parts$/;"	f	class:Savon.Operation
+build	lib/savon/element_builder.rb	/^    def build(parts)$/;"	f	class:Savon.ElementBuilder
+build	lib/savon/example_message.rb	/^    def self.build(parts)$/;"	F	class:Savon.ExampleMessage
+build	lib/savon/message.rb	/^    def build(message)$/;"	f	class:Savon.Message
+build	lib/savon/operation.rb	/^    def build$/;"	f	class:Savon.Operation
+build	lib/savon/xs/types.rb	/^    def self.build(node, schemas, schema = {})$/;"	F	class:Savon.XS
+build_body	lib/savon/envelope.rb	/^    def build_body$/;"	f	class:Savon.Envelope
+build_complex_type_element	lib/savon/message.rb	/^    def build_complex_type_element(element, xml, tag, value)$/;"	f	class:Savon.Message
+build_element	lib/savon/element_builder.rb	/^    def build_element(part)$/;"	f	class:Savon.ElementBuilder
+build_elements	lib/savon/message.rb	/^    def build_elements(elements, message, xml)$/;"	f	class:Savon.Message
+build_envelope	lib/savon/envelope.rb	/^    def build_envelope(header, body)$/;"	f	class:Savon.Envelope
+build_header	lib/savon/envelope.rb	/^    def build_header$/;"	f	class:Savon.Envelope
+build_parts	lib/savon/wsdl/input_output.rb	/^      def build_parts$/;"	f	class:Savon.WSDL.Input
+build_rpc_wrapper	lib/savon/envelope.rb	/^    def build_rpc_wrapper(body)$/;"	f	class:Savon.Envelope
+build_simple_type_element	lib/savon/message.rb	/^    def build_simple_type_element(element, xml, tag, value)$/;"	f	class:Savon.Message
+build_type_element	lib/savon/element_builder.rb	/^    def build_type_element(part)$/;"	f	class:Savon.ElementBuilder
+call	lib/savon/operation.rb	/^    def call$/;"	f	class:Savon.Operation
+child_elements	lib/savon/element_builder.rb	/^    def child_elements(parent, type)$/;"	f	class:Savon.ElementBuilder
+children	lib/savon/xs/types.rb	/^      def children$/;"	f	class:Savon.XS.BaseType
+client	spec/support/http_mock.rb	/^    def client$/;"	f	class:SpecSupport.HTTPMock
+collect_attributes	lib/savon/example_message.rb	/^    def self.collect_attributes(element)$/;"	F	class:Savon.ExampleMessage
+collect_attributes	lib/savon/xs/types.rb	/^      def collect_attributes(memo = [])$/;"	f	class:Savon.XS.Annotation
+collect_attributes	lib/savon/xs/types.rb	/^      def collect_attributes(memo = [])$/;"	f	class:Savon.XS.AttributeGroup
+collect_attributes	lib/savon/xs/types.rb	/^      def collect_attributes(memo = [])$/;"	f	class:Savon.XS.BaseType
+collect_attributes	lib/savon/xs/types.rb	/^      def collect_attributes(memo = [])$/;"	f	class:Savon.XS.SimpleContent
+collect_body_parts	lib/savon/wsdl/input_output.rb	/^      def collect_body_parts$/;"	f	class:Savon.WSDL.Input
+collect_child_elements	lib/savon/xs/types.rb	/^      def collect_child_elements(memo = [])$/;"	f	class:Savon.XS.Annotation
+collect_child_elements	lib/savon/xs/types.rb	/^      def collect_child_elements(memo = [])$/;"	f	class:Savon.XS.Attribute
+collect_child_elements	lib/savon/xs/types.rb	/^      def collect_child_elements(memo = [])$/;"	f	class:Savon.XS.BaseType
+collect_child_elements	lib/savon/xs/types.rb	/^      def collect_child_elements(memo = [])$/;"	f	class:Savon.XS.Extension
+collect_child_elements	lib/savon/xs/types.rb	/^      def collect_child_elements(memo = [])$/;"	f	class:Savon.XS.SimpleContent
+collect_header_parts	lib/savon/wsdl/input_output.rb	/^      def collect_header_parts$/;"	f	class:Savon.WSDL.Input
+collect_namespaces	lib/savon/envelope.rb	/^    def collect_namespaces$/;"	f	class:Savon.Envelope
+collect_sections	lib/savon/wsdl/document.rb	/^      def collect_sections(mapping)$/;"	f	class:Savon.WSDL.Document
+collect_sections	lib/savon/wsdl/document_collection.rb	/^      def collect_sections$/;"	f	class:Savon.WSDL.DocumentCollection
+complex_type	lib/savon/xs/schema_collection.rb	/^      def complex_type(namespace, name)$/;"	f	class:Savon.XS.SchemaCollection
+complex_type?	lib/savon/element.rb	/^    def complex_type?$/;"	f	class:Savon.Element
+create_nsid	lib/savon/envelope.rb	/^    def create_nsid$/;"	f	class:Savon.Envelope
+doc	lib/savon/response.rb	/^    def doc$/;"	f	class:Savon.Response
+each	lib/savon/wsdl/document_collection.rb	/^      def each(&block)$/;"	f	class:Savon.WSDL.DocumentCollection
+each	lib/savon/xs/schema_collection.rb	/^      def each(&block)$/;"	f	class:Savon.XS.SchemaCollection
+element	lib/savon/xs/schema_collection.rb	/^      def element(namespace, name)$/;"	f	class:Savon.XS.SchemaCollection
+element_attributes	lib/savon/element_builder.rb	/^    def element_attributes(type)$/;"	f	class:Savon.ElementBuilder
+empty?	lib/savon/xs/types.rb	/^      def empty?$/;"	f	class:Savon.XS.BaseType
+example_body	lib/savon/operation.rb	/^    def example_body$/;"	f	class:Savon.Operation
+example_header	lib/savon/operation.rb	/^    def example_header$/;"	f	class:Savon.Operation
+expand_qname	lib/savon/element_builder.rb	/^    def expand_qname(qname, namespaces)$/;"	f	class:Savon.ElementBuilder
+extract_attributes	lib/savon/message.rb	/^    def extract_attributes(hash)$/;"	f	class:Savon.Message
+extract_value	lib/savon/message.rb	/^    def extract_value(name, symbol_name, message)$/;"	f	class:Savon.Message
+fake_request	spec/support/http_mock.rb	/^    def fake_request(url, fixture = nil)$/;"	f	class:SpecSupport.HTTPMock
+fetch_binding	lib/savon/wsdl/port.rb	/^      def fetch_binding(documents)$/;"	f	class:Savon.WSDL.Port
+fetch_port_type	lib/savon/wsdl/binding.rb	/^      def fetch_port_type(documents)$/;"	f	class:Savon.WSDL.Binding
+find_attribute	lib/savon/element_builder.rb	/^    def find_attribute(qname, namespaces)$/;"	f	class:Savon.ElementBuilder
+find_by_namespace	lib/savon/xs/schema_collection.rb	/^      def find_by_namespace(namespace)$/;"	f	class:Savon.XS.SchemaCollection
+find_element	lib/savon/element_builder.rb	/^    def find_element(qname, namespaces)$/;"	f	class:Savon.ElementBuilder
+find_input_child_nodes	lib/savon/wsdl/binding_operation.rb	/^      def find_input_child_nodes(child_name)$/;"	f	class:Savon.WSDL.BindingOperation
+find_message	lib/savon/wsdl/input_output.rb	/^      def find_message(qname)$/;"	f	class:Savon.WSDL.Input
+find_node	lib/savon/wsdl/port_type_operation.rb	/^      def find_node(node_name)$/;"	f	class:Savon.WSDL.PortTypeOperation
+find_schema	lib/savon/element_builder.rb	/^    def find_schema(namespace)$/;"	f	class:Savon.ElementBuilder
+find_soap_node	lib/savon/wsdl/binding.rb	/^      def find_soap_node$/;"	f	class:Savon.WSDL.Binding
+find_soap_operation_node	lib/savon/wsdl/binding_operation.rb	/^      def find_soap_operation_node$/;"	f	class:Savon.WSDL.BindingOperation
+find_type	lib/savon/element_builder.rb	/^    def find_type(qname, namespaces)$/;"	f	class:Savon.ElementBuilder
+find_type_for_element	lib/savon/element_builder.rb	/^    def find_type_for_element(element)$/;"	f	class:Savon.ElementBuilder
+fixture	spec/support/fixture.rb	/^  def fixture(path)$/;"	f	class:SpecSupport
+form	lib/savon/xs/types.rb	/^      def form$/;"	f	class:Savon.XS.PrimaryType
+get	lib/savon/httpclient.rb	/^    def get(url)$/;"	f	class:Savon.HTTPClient
+get	spec/savon/resolver_spec.rb	/^      def get(url)$/;"	f
+get	spec/support/http_mock.rb	/^    def get(url)$/;"	f	class:SpecSupport.HTTPMock
+get_documents	spec/savon/wsdl/document_spec.rb	/^  def get_documents(fixture)$/;"	f
+handle_simple_type	lib/savon/element_builder.rb	/^    def handle_simple_type(attribute, type)$/;"	f	class:Savon.ElementBuilder
+handle_type	lib/savon/element_builder.rb	/^    def handle_type(element, type)$/;"	f	class:Savon.ElementBuilder
+hash	lib/savon/response.rb	/^    def hash$/;"	f	class:Savon.Response
+headers	lib/savon/wsdl/input_output.rb	/^      def headers$/;"	f	class:Savon.WSDL.Input
+headers	lib/savon/wsdl/input_output.rb	/^      def headers$/;"	f	class:Savon.WSDL.Output
+http	lib/savon.rb	/^  def http$/;"	f	class:Savon
+http_adapter	lib/savon.rb	/^  def self.http_adapter$/;"	F	class:Savon
+http_adapter	lib/savon.rb	/^  def self.http_adapter=(adapter)$/;"	F	class:Savon
+http_headers	lib/savon/operation.rb	/^    def http_headers$/;"	f	class:Savon.Operation
+http_mock	spec/support/http_mock.rb	/^  def http_mock$/;"	f	class:SpecSupport
+id	lib/savon/xs/types.rb	/^      def id$/;"	f	class:Savon.XS.ComplexType
+import	lib/savon/importer.rb	/^    def import(location)$/;"	f	class:Savon.Importer
+import_document	lib/savon/importer.rb	/^    def import_document(location, &block)$/;"	f	class:Savon.Importer
+import_schemas	lib/savon/importer.rb	/^    def import_schemas$/;"	f	class:Savon.Importer
+imports	lib/savon/wsdl/document.rb	/^      def imports$/;"	f	class:Savon.WSDL.Document
+initialize	lib/savon.rb	/^  def initialize(wsdl, http = nil)$/;"	f	class:Savon
+initialize	lib/savon/element.rb	/^    def initialize$/;"	f	class:Savon.Element
+initialize	lib/savon/element_builder.rb	/^    def initialize(schemas)$/;"	f	class:Savon.ElementBuilder
+initialize	lib/savon/envelope.rb	/^    def initialize(operation, header, body)$/;"	f	class:Savon.Envelope
+initialize	lib/savon/httpclient.rb	/^    def initialize$/;"	f	class:Savon.HTTPClient
+initialize	lib/savon/importer.rb	/^    def initialize(resolver, documents, schemas)$/;"	f	class:Savon.Importer
+initialize	lib/savon/message.rb	/^    def initialize(envelope, parts)$/;"	f	class:Savon.Message
+initialize	lib/savon/operation.rb	/^    def initialize(operation, wsdl, http)$/;"	f	class:Savon.Operation
+initialize	lib/savon/resolver.rb	/^    def initialize(http)$/;"	f	class:Savon.Resolver
+initialize	lib/savon/response.rb	/^    def initialize(raw_response)$/;"	f	class:Savon.Response
+initialize	lib/savon/wsdl.rb	/^    def initialize(wsdl, http)$/;"	f	class:Savon.WSDL
+initialize	lib/savon/wsdl/binding.rb	/^      def initialize(binding_node)$/;"	f	class:Savon.WSDL.Binding
+initialize	lib/savon/wsdl/binding_operation.rb	/^      def initialize(operation_node, defaults = {})$/;"	f	class:Savon.WSDL.BindingOperation
+initialize	lib/savon/wsdl/document.rb	/^      def initialize(document, schemas)$/;"	f	class:Savon.WSDL.Document
+initialize	lib/savon/wsdl/document_collection.rb	/^      def initialize$/;"	f	class:Savon.WSDL.DocumentCollection
+initialize	lib/savon/wsdl/input_output.rb	/^      def initialize(binding_operation, port_type_operation, wsdl)$/;"	f	class:Savon.WSDL.Input
+initialize	lib/savon/wsdl/message.rb	/^      def initialize(message_node)$/;"	f	class:Savon.WSDL.Message
+initialize	lib/savon/wsdl/operation.rb	/^      def initialize(name, endpoint, binding_operation, port_type_operation, wsdl)$/;"	f	class:Savon.WSDL.Operation
+initialize	lib/savon/wsdl/port.rb	/^      def initialize(port_node, soap_node)$/;"	f	class:Savon.WSDL.Port
+initialize	lib/savon/wsdl/port_type.rb	/^      def initialize(port_type_node)$/;"	f	class:Savon.WSDL.PortType
+initialize	lib/savon/wsdl/port_type_operation.rb	/^      def initialize(operation_node)$/;"	f	class:Savon.WSDL.PortTypeOperation
+initialize	lib/savon/wsdl/service.rb	/^      def initialize(service_node)$/;"	f	class:Savon.WSDL.Service
+initialize	lib/savon/xs/schema.rb	/^      def initialize(schema, schemas)$/;"	f	class:Savon.XS.Schema
+initialize	lib/savon/xs/schema_collection.rb	/^      def initialize$/;"	f	class:Savon.XS.SchemaCollection
+initialize	lib/savon/xs/types.rb	/^      def initialize(node, schemas, schema = {})$/;"	f	class:Savon.XS.Attribute
+initialize	lib/savon/xs/types.rb	/^      def initialize(node, schemas, schema = {})$/;"	f	class:Savon.XS.BaseType
+initialize	lib/savon/xs/types.rb	/^      def initialize(node, schemas, schema = {})$/;"	f	class:Savon.XS.Element
+initialize	lib/savon/xs/types.rb	/^      def initialize(node, schemas, schema = {})$/;"	f	class:Savon.XS.PrimaryType
+initialize	spec/support/http_mock.rb	/^    def initialize$/;"	f	class:SpecSupport.HTTPMock
+inline_type	lib/savon/xs/types.rb	/^      def inline_type$/;"	f	class:Savon.XS.Attribute
+inline_type	lib/savon/xs/types.rb	/^      def inline_type$/;"	f	class:Savon.XS.Element
+input	lib/savon/wsdl/operation.rb	/^      def input$/;"	f	class:Savon.WSDL.Operation
+input	lib/savon/wsdl/port_type_operation.rb	/^      def input$/;"	f	class:Savon.WSDL.PortTypeOperation
+input_body	lib/savon/wsdl/binding_operation.rb	/^      def input_body$/;"	f	class:Savon.WSDL.BindingOperation
+input_headers	lib/savon/wsdl/binding_operation.rb	/^      def input_headers$/;"	f	class:Savon.WSDL.BindingOperation
+input_style	lib/savon/operation.rb	/^    def input_style$/;"	f	class:Savon.Operation
+input_style	lib/savon/wsdl/operation.rb	/^      def input_style$/;"	f	class:Savon.WSDL.Operation
+inspect	lib/savon/xs/types.rb	/^      def inspect$/;"	f	class:Savon.XS.BaseType
+load_fixture	spec/support/http_mock.rb	/^    def load_fixture(fixture)$/;"	f	class:SpecSupport.HTTPMock
+message_name	lib/savon/wsdl/input_output.rb	/^      def message_name$/;"	f	class:Savon.WSDL.Input
+message_name	lib/savon/wsdl/input_output.rb	/^      def message_name$/;"	f	class:Savon.WSDL.Output
+messages	lib/savon/wsdl/document_collection.rb	/^      def messages$/;"	f	class:Savon.WSDL.DocumentCollection
+name	lib/savon/wsdl/binding_operation.rb	/^      def name$/;"	f	class:Savon.WSDL.BindingOperation
+name	lib/savon/wsdl/message.rb	/^      def name$/;"	f	class:Savon.WSDL.Message
+name	lib/savon/wsdl/port_type.rb	/^      def name$/;"	f	class:Savon.WSDL.PortType
+name	lib/savon/wsdl/service.rb	/^      def name$/;"	f	class:Savon.WSDL.Service
+new_complex_type	spec/savon/xs/complex_type_spec.rb	/^  def new_complex_type(xml, schemas = nil)$/;"	f
+new_element	spec/savon/xs/element_spec.rb	/^  def new_element(xml)$/;"	f
+new_http_client	lib/savon.rb	/^  def new_http_client$/;"	f	class:Savon
+new_simple_type	spec/savon/xs/simple_type_spec.rb	/^  def new_simple_type(xml)$/;"	f
+nori	lib/savon/response.rb	/^    def nori$/;"	f	class:Savon.Response
+operation	lib/savon.rb	/^  def operation(service_name, port_name, operation_name)$/;"	f	class:Savon
+operation	lib/savon/wsdl.rb	/^    def operation(service_name, port_name, operation_name)$/;"	f	class:Savon.WSDL
+operations	lib/savon.rb	/^  def operations(service_name, port_name)$/;"	f	class:Savon
+operations	lib/savon/wsdl.rb	/^    def operations(service_name, port_name)$/;"	f	class:Savon.WSDL
+operations	lib/savon/wsdl/binding.rb	/^      def operations$/;"	f	class:Savon.WSDL.Binding
+operations	lib/savon/wsdl/port_type.rb	/^      def operations$/;"	f	class:Savon.WSDL.PortType
+operations!	lib/savon/wsdl/binding.rb	/^      def operations!$/;"	f	class:Savon.WSDL.Binding
+operations!	lib/savon/wsdl/port_type.rb	/^      def operations!$/;"	f	class:Savon.WSDL.PortType
+optional?	lib/savon/attribute.rb	/^    def optional?$/;"	f	class:Savon.Attribute
+output	lib/savon/wsdl/operation.rb	/^      def output$/;"	f	class:Savon.WSDL.Operation
+output	lib/savon/wsdl/port_type_operation.rb	/^      def output$/;"	f	class:Savon.WSDL.PortTypeOperation
+output_style	lib/savon/operation.rb	/^    def output_style$/;"	f	class:Savon.Operation
+output_style	lib/savon/wsdl/operation.rb	/^      def output_style$/;"	f	class:Savon.WSDL.Operation
+parse	lib/savon/xs/schema.rb	/^      def parse$/;"	f	class:Savon.XS.Schema
+parse_node	lib/savon/wsdl/port_type_operation.rb	/^      def parse_node(node)$/;"	f	class:Savon.WSDL.PortTypeOperation
+parts	lib/savon/wsdl/message.rb	/^      def parts$/;"	f	class:Savon.WSDL.Message
+parts!	lib/savon/wsdl/message.rb	/^      def parts!$/;"	f	class:Savon.WSDL.Message
+path	spec/support/fixture.rb	/^    def self.path(path)$/;"	F	class:SpecSupport.Fixture
+port_types	lib/savon/wsdl/document_collection.rb	/^      def port_types$/;"	f	class:Savon.WSDL.DocumentCollection
+ports	lib/savon/wsdl/service.rb	/^      def ports$/;"	f	class:Savon.WSDL.Service
+ports!	lib/savon/wsdl/service.rb	/^      def ports!$/;"	f	class:Savon.WSDL.Service
+post	lib/savon/httpclient.rb	/^    def post(url, headers, body)$/;"	f	class:Savon.HTTPClient
+post	spec/support/http_mock.rb	/^    def post(url, headers, body)$/;"	f	class:SpecSupport.HTTPMock
+push	lib/savon/xs/schema_collection.rb	/^      def push(schemas)$/;"	f	class:Savon.XS.SchemaCollection
+raise_mock_error!	spec/support/http_mock.rb	/^    def raise_mock_error!(method, url)$/;"	f	class:SpecSupport.HTTPMock
+raw	lib/savon/response.rb	/^    def raw$/;"	f	class:Savon.Response
+recursive?	lib/savon/element.rb	/^    def recursive?$/;"	f	class:Savon.Element
+recursive_child_definition?	lib/savon/element_builder.rb	/^    def recursive_child_definition?(parent, element)$/;"	f	class:Savon.ElementBuilder
+register_namespace	lib/savon/envelope.rb	/^    def register_namespace(namespace)$/;"	f	class:Savon.Envelope
+request	lib/savon/httpclient.rb	/^    def request(method, url, headers, body)$/;"	f	class:Savon.HTTPClient
+resolve	lib/savon/resolver.rb	/^    def resolve(location)$/;"	f	class:Savon.Resolver
+rpc_call?	lib/savon/envelope.rb	/^    def rpc_call?$/;"	f	class:Savon.Envelope
+schema_nodes	lib/savon/wsdl/document.rb	/^      def schema_nodes$/;"	f	class:Savon.WSDL.Document
+schema_nodes!	lib/savon/wsdl/document.rb	/^      def schema_nodes!$/;"	f	class:Savon.WSDL.Document
+schemas	lib/savon/wsdl/document.rb	/^      def schemas$/;"	f	class:Savon.WSDL.Document
+service_name	lib/savon/wsdl.rb	/^    def service_name$/;"	f	class:Savon.WSDL
+service_name	lib/savon/wsdl/document.rb	/^      def service_name$/;"	f	class:Savon.WSDL.Document
+service_name	lib/savon/wsdl/document_collection.rb	/^      def service_name$/;"	f	class:Savon.WSDL.DocumentCollection
+service_port	lib/savon/wsdl/document_collection.rb	/^      def service_port(service_name, port_name)$/;"	f	class:Savon.WSDL.DocumentCollection
+services	lib/savon.rb	/^  def services$/;"	f	class:Savon
+services	lib/savon/wsdl.rb	/^    def services$/;"	f	class:Savon.WSDL
+services	lib/savon/wsdl/document_collection.rb	/^      def services$/;"	f	class:Savon.WSDL.DocumentCollection
+services!	lib/savon/wsdl.rb	/^    def services!$/;"	f	class:Savon.WSDL
+simple_type	lib/savon/xs/schema_collection.rb	/^      def simple_type(namespace, name)$/;"	f	class:Savon.XS.SchemaCollection
+simple_type?	lib/savon/element.rb	/^    def simple_type?$/;"	f	class:Savon.Element
+soap_action	lib/savon/wsdl/operation.rb	/^      def soap_action$/;"	f	class:Savon.WSDL.Operation
+soap_version	lib/savon/wsdl/operation.rb	/^      def soap_version$/;"	f	class:Savon.WSDL.Operation
+split_qname	lib/savon/element_builder.rb	/^    def split_qname(qname)$/;"	f	class:Savon.ElementBuilder
+store_element	lib/savon/xs/schema.rb	/^      def store_element(collection, node, schema)$/;"	f	class:Savon.XS.Schema
+store_import	lib/savon/xs/schema.rb	/^      def store_import(node)$/;"	f	class:Savon.XS.Schema
+target_namespace	lib/savon/wsdl/document.rb	/^      def target_namespace$/;"	f	class:Savon.WSDL.Document
+to_a	lib/savon/element.rb	/^    def to_a(memo = [], stack = [])$/;"	f	class:Savon.Element
+to_s	lib/savon/envelope.rb	/^    def to_s$/;"	f	class:Savon.Envelope
+type_class	lib/savon/xs/types.rb	/^    def self.type_class(type)$/;"	F	class:Savon.XS
+verify_operation_exists!	lib/savon/wsdl.rb	/^    def verify_operation_exists!(service_name, port_name, operation_name)$/;"	f	class:Savon.WSDL
+verify_operation_style!	lib/savon.rb	/^  def verify_operation_style!(operation)$/;"	f	class:Savon
+verify_port_exists!	lib/savon/wsdl.rb	/^    def verify_port_exists!(service_name, port_name)$/;"	f	class:Savon.WSDL
+verify_service_exists!	lib/savon/wsdl.rb	/^    def verify_service_exists!(service_name)$/;"	f	class:Savon.WSDL
+xpath	lib/savon/response.rb	/^    def xpath(path, namespaces = nil)$/;"	f	class:Savon.Response

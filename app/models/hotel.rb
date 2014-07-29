@@ -14,6 +14,42 @@ class Hotel < ActiveRecord::Base
 	has_many :reviews, dependent: :destroy
 	belongs_to :city
 
+	def self.get_hotel_infos_from_asiatravel_by_country_code_and_city_code country_code, city_code, ignids = []
+    hotel_list = AsiatravelApi.get_hotel_list_by_country_city_code(country_code, city_code)
+    hotel_infos = []
+    tasks = []
+    mutex = Mutex.new
+    hotel_list.map do |hotel_preview|
+    	if hotel_preview
+    		next if ignids.include? hotel_preview[:hotel_code]
+				while tasks.select{ |t| t.alive? }.size >= 30
+					sleep 1
+				end
+				tasks << Thread.new do
+					result = AsiatravelApi.retrieve_hotel_information_v2(hotel_preview[:hotel_code])
+					if result.respond_to?(:[])
+						hotel_info = result[:hotel_gen_info].as_json(only: [:hotel_code, :hotel_name, :hotel_address, :latitude, :longitude, :city_name, :country_name])
+					else
+						File.open("cachelog.txt", "a+") { |file| file.puts "hotel missed: #{hotel_preview}" }
+						hotel_info = nil
+					end
+					mutex.synchronize do
+						hotel_infos << hotel_info if hotel_info
+					end
+				end
+    	end
+		end
+		tasks.each { |t| t.join }
+		return hotel_infos
+  end
+
+  def self.get_hotel_infos_from_asiatravel_by_country_code country_code, ignids = []
+    city_list = AsiatravelApi.get_city_list_by_country_code(country_code)
+    city_list.inject([]) do |hlist, city|
+      hlist += get_hotel_infos_from_asiatravel_by_country_code_and_city_code(country_code, city[:city_code], ignids)
+    end
+  end
+
 	def address *args
 		args << {} unless args.last.instance_of?(Hash)
 		options = args.last
@@ -482,26 +518,27 @@ class Hotel < ActiveRecord::Base
 	# end
 
 	def self.update_or_create_hotels_from_asiatravel_by_country_code_and_city_code country_code, city_code, ingore_ids = []
-		conn = Conn.init('http://asia.senscape.com.cn', timeout: 1.day.to_i)
-		# conn = Conn.init('http://localhost:3000', timeout: 1.day.to_i)
-		response = conn.get '/users/login'
-		conn.headers['cookie'] = response.headers['set-cookie']
-		doc = Nokogiri::HTML(response.body)
-		authenticity_token = doc.css("[name='authenticity_token']")[0]['value']
-		response = conn.post '/users/check_password', {
-			utf8: '✓',
-			authenticity_token: authenticity_token,
-			email: 'nomadop@gmail.com',
-			pwd: '366534743'
-			# email: '123@123.123',
-			# pwd: '123456'
-		}
-		conn.headers['cookie'] = response.headers['set-cookie']
-		conn.params['country_code'] = country_code
-		conn.params['city_code'] = city_code
-		conn.params['ignids'] = ingore_ids.join(',')
-		response = conn.get '/hotel_score_caches/get_hotel_infos_from_asiatravel_by_country_code_and_city_code.json'
-		hotel_infos = JSON.parse(response.body)
+		# conn = Conn.init('http://asia.senscape.com.cn', timeout: 1.day.to_i)
+		# # conn = Conn.init('http://localhost:3000', timeout: 1.day.to_i)
+		# response = conn.get '/users/login'
+		# conn.headers['cookie'] = response.headers['set-cookie']
+		# doc = Nokogiri::HTML(response.body)
+		# authenticity_token = doc.css("[name='authenticity_token']")[0]['value']
+		# response = conn.post '/users/check_password', {
+		# 	utf8: '✓',
+		# 	authenticity_token: authenticity_token,
+		# 	email: 'nomadop@gmail.com',
+		# 	pwd: '366534743'
+		# 	# email: '123@123.123',
+		# 	# pwd: '123456'
+		# }
+		# conn.headers['cookie'] = response.headers['set-cookie']
+		# conn.params['country_code'] = country_code
+		# conn.params['city_code'] = city_code
+		# conn.params['ignids'] = ingore_ids.join(',')
+		# response = conn.get '/hotel_score_caches/get_hotel_infos_from_asiatravel_by_country_code_and_city_code.json'
+		# hotel_infos = JSON.parse(response.body)
+		hotel_infos = Hotel.get_hotel_infos_from_asiatravel_by_country_code_and_city_code(country_code, city_code)
 		hotel_infos.map do |hotel_info|
 			create_hotel_by_hotel_info_from_asiatravel(hotel_info)
 		end
@@ -514,25 +551,26 @@ class Hotel < ActiveRecord::Base
 	end
 
 	def self.update_or_create_hotels_from_asiatravel_by_country_code country_code, ingore_ids = []
-		# conn = Conn.init('http://asia.senscape.com.cn', timeout: 1.day.to_i)
-		conn = Conn.init('http://localhost:3000', timeout: 1.day.to_i)
-		response = conn.get '/users/login'
-		conn.headers['cookie'] = response.headers['set-cookie']
-		doc = Nokogiri::HTML(response.body)
-		authenticity_token = doc.css("[name='authenticity_token']")[0]['value']
-		response = conn.post '/users/check_password', {
-			utf8: '✓',
-			authenticity_token: authenticity_token,
-			# email: 'nomadop@gmail.com',
-			# pwd: '366534743'
-			email: '123@123.123',
-			pwd: '123456'
-		}
-		conn.headers['cookie'] = response.headers['set-cookie']
-		conn.params['country_code'] = country_code
-		conn.params['ignids'] = ingore_ids.join(',')
-		response = conn.get '/hotel_score_caches/get_hotel_infos_from_asiatravel_by_country_code.json'
-		hotel_infos = JSON.parse(response.body)
+		# # conn = Conn.init('http://asia.senscape.com.cn', timeout: 1.day.to_i)
+		# conn = Conn.init('http://localhost:3000', timeout: 1.day.to_i)
+		# response = conn.get '/users/login'
+		# conn.headers['cookie'] = response.headers['set-cookie']
+		# doc = Nokogiri::HTML(response.body)
+		# authenticity_token = doc.css("[name='authenticity_token']")[0]['value']
+		# response = conn.post '/users/check_password', {
+		# 	utf8: '✓',
+		# 	authenticity_token: authenticity_token,
+		# 	# email: 'nomadop@gmail.com',
+		# 	# pwd: '366534743'
+		# 	email: '123@123.123',
+		# 	pwd: '123456'
+		# }
+		# conn.headers['cookie'] = response.headers['set-cookie']
+		# conn.params['country_code'] = country_code
+		# conn.params['ignids'] = ingore_ids.join(',')
+		# response = conn.get '/hotel_score_caches/get_hotel_infos_from_asiatravel_by_country_code.json'
+		# hotel_infos = JSON.parse(response.body)
+		hotel_infos = Hotel.get_hotel_infos_from_asiatravel_by_country_code(country_code)
 		hotel_infos.map do |hotel_info|
 			create_hotel_by_hotel_info_from_asiatravel(hotel_info)
 		end
