@@ -34,7 +34,7 @@
   <strong>Log:</strong>
   <ul>
     <% @task.log_list.each do |log| %>
-    <li><%= link_to log, log_task_path(@task, file: log) %></li>
+    <li><%= link_to log[0], log_task_path(@task, file: log) %> | <%= log[1] %></li>
     <% end %>
   </ul>
 </p>

@@ -55,7 +55,7 @@ class Task < ActiveRecord::Base
 			result
 		end
 		match_options ||= {}
-		
+
 		Hotel.update_or_create_hotels_from_asiatravel_by_country_code(ccode)
 		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, true, self)
 		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, match_options.merge(logger: self))
@@ -103,7 +103,10 @@ class Task < ActiveRecord::Base
 	end
 
 	def log_list
-		(Dir.entries(log_folder) - ['..', '.']).sort
+		Dir.chdir log_folder
+		(Dir.entries('.') - ['..', '.']).sort.map {|fname| [fname, File.size(fname)]}
+	ensure
+		Dir.chdir Task::APP_DIR
 	end
 
 	def whenever_reset
