@@ -114,13 +114,17 @@ class Task < ActiveRecord::Base
 		whenever_add
 	end
 
+	def run
+		self.send(self.job_type)
+	end
+
 	def self.job_types
 		Task::ACCEPTABLE_JOB_TYPES
 	end
 
 	def self.run id
 		task = Task.find(id)
-		task.send(task.job_type)
+		task.run
 	end
 
 	private

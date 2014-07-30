@@ -1,5 +1,11 @@
 class TasksController < ApplicationController
-  before_action :set_task, only: [:show, :edit, :update, :destroy, :log]
+  before_action :set_task, only: [:show, :edit, :update, :destroy, :log, :run]
+
+  def run
+    @task.run
+
+    render text: ''
+  end
 
   def log
     send_data File.read(@task.log_folder + '/' + params[:file]), filename: params[:file], disposition: 'inline', type: 'text'
