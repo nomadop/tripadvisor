@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resources :tasks do
     member do
       get 'log'
+      post 'run'
     end
   end
 

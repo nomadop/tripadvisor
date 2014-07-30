@@ -39,5 +39,6 @@
   </ul>
 </p>
 
+<%= link_to 'Run', run_task_path(@task), method: :post, remote: true %> |
 <%= link_to 'Edit', edit_task_path(@task) %> |
 <%= link_to 'Back', tasks_path %>
