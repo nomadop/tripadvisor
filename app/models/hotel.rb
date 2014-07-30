@@ -376,7 +376,7 @@ class Hotel < ActiveRecord::Base
 			if hotelB.location['latlng']
 				latlngs = hotelB.location['latlng']
 			else
-				latlngs = [GeocodingApi.get_latlng(hotelB.format_address, 'mapquest')]
+				latlngs = [GeocodingApi.get_latlng(hotelB.format_address)]
 				hotelB.location['latlng'] = latlngs
 				hotelB.save
 			end

@@ -41,6 +41,10 @@ class GeocodingApi
 			# response = conn.get(response.headers['location'])
 			Geokit::Geocoders.proxy = 'https://127.0.0.1:8087/'
 			Geokit::Geocoders::GoogleGeocoder.geocode location
+		when 'geonames'
+			Geokit::Geocoders::GeonamesGeocoder.key = GeocodingApi::GEONAMES_APIKEY
+			Geokit::Geocoders::GeonamesGeocoder.premium = false
+			Geokit::Geocoders::GeonamesGeocoder.geocode location
 		end
 		# JSON.parse(response.body)
 	rescue Faraday::TimeoutError => e

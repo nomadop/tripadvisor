@@ -109,7 +109,7 @@ class TripadvisorCrawler
 				coord = doc.css('script').to_s.scan(/[lat|lng]: (\d+\.\d+)/)
 				latlng = [{'lat' => coord[0][0].to_f, 'lng' => coord[1][0].to_f}]
 			else
-				latlng = [GeocodingApi.get_latlng(hotel_info[:format_address], 'mapquest')]
+				latlng = [GeocodingApi.get_latlng(hotel_info[:format_address])]
 			end
 			hotel_info[:location]['latlng'] = latlng
 			hotel_info[:tag] = 'tripadvisor'
@@ -199,14 +199,14 @@ class TripadvisorCrawler
 		end
 	end
 
-	# def self.get_hotel_info_by_dnum dnum
-	# 	conn = get_conn
-	# 	response = conn.get TripadvisorCrawler::HOTEL_REVIEW_URL.gsub(/%dnum/, dnum.to_s)
-	# 	return nil unless response.status == 301
-	# 	location = response.headers['location']
-	# 	return nil unless location.split('/').last[0...5] == 'Hotel'
-	# 	get_hotel_info_by_hotelurl(location)
-	# end
+	def self.get_hotel_info_by_dnum dnum
+		conn = get_conn
+		response = conn.get TripadvisorCrawler::HOTEL_REVIEW_URL.gsub(/%dnum/, dnum.to_s)
+		return nil unless response.status == 301
+		location = response.headers['location']
+		return nil unless location.split('/').last[0...5] == 'Hotel'
+		get_hotel_info_by_hotelurl(location)
+	end
 
 	def self.get_hotel_infos_by_geourl url, *args
 		args << {} unless args.last.instance_of?(Hash)
