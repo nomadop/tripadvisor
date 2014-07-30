@@ -109,7 +109,7 @@ class TripadvisorCrawler
 				coord = doc.css('script').to_s.scan(/[lat|lng]: (\d+\.\d+)/)
 				latlng = [{'lat' => coord[0][0].to_f, 'lng' => coord[1][0].to_f}]
 			else
-				latlng = GeocodingApi.get_latlng({street: hotel_info[:street_address], city: hotel_info[:location]['City'], country: hotel_info[:location]['Country']})
+				latlng = [GeocodingApi.get_latlng(hotel_info[:format_address], 'mapquest')]
 			end
 			hotel_info[:location]['latlng'] = latlng
 			hotel_info[:tag] = 'tripadvisor'
