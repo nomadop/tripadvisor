@@ -373,7 +373,13 @@ class Hotel < ActiveRecord::Base
 			similarity += self.send(options[:algorithm], hotelA.format_address, hotelB.format_address) * options[:address_weight]
 		end
 		if options[:with_distance] == true
-			latlngs = hotelB.location['latlng']
+			if hotelB.location['latlng']
+				latlngs = hotelB.location['latlng']
+			else
+				latlngs = [GeocodingApi.get_latlng(hotelB.format_address, 'mapquest')]
+				hotelB.location['latlng'] = latlngs
+				hotelB.save
+			end
 			distances = latlngs.map do |latlng|
 				GeocodingApi.get_distance(hotelA.location['lat'].to_f, hotelA.location['lng'].to_f, latlng['lat'].to_f, latlng['lng'].to_f)
 			end
