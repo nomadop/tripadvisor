@@ -8,6 +8,10 @@ class GeocodingApi
 	end
 
 	def self.get_distance lat1, lng1, lat2, lng2
+		lat1 ||= 0.0
+		lng1 ||= 0.0
+		lat2 ||= 0.0
+		lng2 ||= 0.0
 		radlat1 = rad(lat1)
 		radlat2 = rad(lat2)
 		a = radlat1 - radlat2
