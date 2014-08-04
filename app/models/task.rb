@@ -94,16 +94,15 @@ class Task < ActiveRecord::Base
 
 		begin
 			self.send(self.job_type)
+		rescue Exception => e
+			error_log(level: :error) do |file|
+				file.puts "[#{Time.now}] #{e.inspect}:"
+				e.backtrace.each do |line|
+					file.puts "    #{line}"
+				end
+			end
 		ensure
 			self.update(status: Task::STATUS[:ready])
-		end
-
-	rescue Exception => e
-		error_log(level: :error) do |file|
-			file.puts "[#{Time.now}] #{e.inspect}:"
-			e.backtrace.each do |line|
-				file.puts "    #{line}"
-			end
 		end
 	end
 
