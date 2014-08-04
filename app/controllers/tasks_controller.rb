@@ -1,5 +1,5 @@
 class TasksController < ApplicationController
-  before_action :set_task, only: [:show, :edit, :update, :destroy, :log, :run]
+  before_action :set_task, only: [:show, :edit, :update, :destroy, :log, :run, :clear_log]
 
   def clear_log
     @task.clear_log_folder
