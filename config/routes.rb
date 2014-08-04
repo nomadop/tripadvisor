@@ -5,6 +5,7 @@ Rails.application.routes.draw do
     member do
       get 'log'
       post 'run'
+      post 'clear_log'
     end
   end
 

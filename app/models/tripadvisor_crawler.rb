@@ -85,8 +85,8 @@ class TripadvisorCrawler
 		Worker.clear
 		workers = []
 		city_urls.each_with_index do |city_url, index|
-			workers << Worker.new(index * 10, 1) do
-				TripadvisorCrawler.get_all_infos_by_geourl(city_url, index * 10, load_reviews: load_reviews, logger: logger)
+			workers << Worker.new(index + 1, 1) do
+				TripadvisorCrawler.get_all_infos_by_geourl(city_url, index + 1, load_reviews: load_reviews, logger: logger)
 			end
 		end
 		Worker.run
@@ -328,7 +328,17 @@ class TripadvisorCrawler
 		options[:logger].tripadvisor_log "    got #{count} hotels", level: :info
 		30.step(count, 30) do |p|
 			break if p == count
-			response = conn.get url.split('-').insert(url.split('-').size - 2, "oa#{p}").join('-')
+			flag = 'pending'
+			while flag == 'pending'
+				begin
+					response = conn.get url.split('-').insert(url.split('-').size - 2, "oa#{p}").join('-')
+					flag = 'current'
+				rescue Faraday::TimeoutError => e
+					flag = 'pending'
+				rescue Exception => e
+					raise e
+				end
+			end
 			doc = Nokogiri::HTML(response.body)
 			doc.css('#ACCOM_OVERVIEW .listing').each do |hotel|
 				hotel_urls << TripadvisorCrawler::URL + hotel.css('.quality a:first')[0]['href']
@@ -362,7 +372,7 @@ class TripadvisorCrawler
 		# tasks.each { |t| t.join }
 		workers = []
 		hotel_urls.each_with_index do |url, index|
-			weight = "#{options[:weight]}.#{"%05d" % (index + 1)}".to_f
+			weight = "#{options[:weight]}#{"%05d" % (index + 1)}".to_f
 			workers << Worker.new(weight, 0.1) do |wid|
 				TripadvisorCrawler.get_hotel_info_by_hotelurl(url, options.merge({task_number: wid}))
 			end
@@ -384,9 +394,9 @@ class TripadvisorCrawler
 		# get_hotel_infos_by_geourl(url, *args) +
 		# get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), *args) +
 		# get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), *args)
-		w1 = Worker.new(weight + 1,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url, args[0].merge({weight: weight + 1})) }
-		w2 = Worker.new(weight + 2,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), args[0].merge({weight: weight + 2})) }
-		w3 = Worker.new(weight + 3,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), args[0].merge({weight: weight + 3})) }
+		w1 = Worker.new(weight + 0.1,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url, args[0].merge({weight: weight + 0.1})) }
+		w2 = Worker.new(weight + 0.2,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), args[0].merge({weight: weight + 0.2})) }
+		w3 = Worker.new(weight + 0.3,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), args[0].merge({weight: weight + 0.3})) }
 		w1.join
 		w2.join
 		w3.join

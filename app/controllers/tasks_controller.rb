@@ -4,7 +4,7 @@ class TasksController < ApplicationController
   def clear_log
     @task.clear_log_folder
 
-    render text: 'success'
+    redirect_to @task
   end
 
   def run

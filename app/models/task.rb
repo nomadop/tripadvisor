@@ -24,30 +24,10 @@ class Task < ActiveRecord::Base
 	APP_DIR = Dir.pwd
 
 	def send_hotel_score_cache_to_senscape
-		unless status == Task::STATUS[:running]
-			self.update(status: Task::STATUS[:running]) 
-		else
-			return false
-		end
-
 		Hotel.post_hotel_score_caches_to_senscape(options)
-	rescue Exception => e
-		error_log(level: :error) do |file|
-			file.puts "[#{Time.now}] #{e.inspect}:"
-			e.backtrace.each do |line|
-				file.puts "    #{line}"
-			end
-		end
-	ensure
-		self.update(status: Task::STATUS[:ready])
 	end
 
 	def get_and_match_hotels
-		unless status == Task::STATUS[:running]
-			self.update(status: Task::STATUS[:running]) 
-		else
-			return false
-		end
 		cname = options[:cname]
 		ccode = options[:ccode]
 		match_options = options[:match_options].keys.inject({}) do |result, key|
@@ -59,15 +39,6 @@ class Task < ActiveRecord::Base
 		Hotel.update_or_create_hotels_from_asiatravel_by_country_code(ccode)
 		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, true, self)
 		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, match_options.merge(logger: self))
-	rescue Exception => e
-		error_log(level: :error) do |file|
-			file.puts "[#{Time.now}] #{e.inspect}:"
-			e.backtrace.each do |line|
-				file.puts "    #{line}"
-			end
-		end
-	ensure
-		self.update(status: Task::STATUS[:ready])
 	end
 
 	ACCEPTABLE_JOB_TYPES = Task.instance_methods(false).map(&:to_s)
@@ -115,7 +86,25 @@ class Task < ActiveRecord::Base
 	end
 
 	def run
-		self.send(self.job_type)
+		unless status == Task::STATUS[:running]
+			self.update(status: Task::STATUS[:running]) 
+		else
+			return false
+		end
+
+		begin
+			self.send(self.job_type)
+		ensure
+			self.update(status: Task::STATUS[:ready])
+		end
+
+	rescue Exception => e
+		error_log(level: :error) do |file|
+			file.puts "[#{Time.now}] #{e.inspect}:"
+			e.backtrace.each do |line|
+				file.puts "    #{line}"
+			end
+		end
 	end
 
 	def self.job_types
