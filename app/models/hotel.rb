@@ -370,10 +370,14 @@ class Hotel < ActiveRecord::Base
 			similarity += self.send(options[:algorithm], hotelA.format_address, hotelB.format_address) * options[:address_weight]
 		end
 		if options[:with_distance] == true
-			if hotelB.location['latlng']
+			unless hotelB.location['latlng'].blank?
 				latlngs = hotelB.location['latlng']
 			else
-				latlngs = [GeocodingApi.get_latlng(hotelB.format_address)]
+				begin
+					latlngs = [GeocodingApi.get_latlng(hotelB.format_address)]
+				rescue Exception => e
+					latlngs = [{}]
+				end
 				hotelB.location['latlng'] = latlngs
 				hotelB.save
 			end

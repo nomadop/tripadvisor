@@ -105,11 +105,11 @@ class TripadvisorCrawler
 			hotel_info[:star_rating] = doc.css('.star .rate img')[0]['alt'].split(' ').first.to_f if doc.css('.star .rate img')[0]
 			hotel_info[:format_address] = doc.css('.format_address')[0].content.gsub(/\n/, '') if doc.css('.format_address')[0]
 			hotel_info[:street_address] = doc.css('.format_address .street-address')[0].content if doc.css('.format_address .street-address')[0]
-			if doc.css('script').to_s.scan(/[lat|lng]: (\d+\.\d+)/).size == 2
+			if doc.css('script').to_s.scan(/[lat|lng]: (\d+\.\d+)/).size >= 2
 				coord = doc.css('script').to_s.scan(/[lat|lng]: (\d+\.\d+)/)
 				latlng = [{'lat' => coord[0][0].to_f, 'lng' => coord[1][0].to_f}]
 			else
-				latlng = [GeocodingApi.get_latlng(hotel_info[:format_address])]
+				latlng = []
 			end
 			hotel_info[:location]['latlng'] = latlng
 			hotel_info[:tag] = 'tripadvisor'
