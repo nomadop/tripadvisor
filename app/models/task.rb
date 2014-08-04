@@ -127,6 +127,13 @@ class Task < ActiveRecord::Base
 		task.run
 	end
 
+	def clear_log_folder
+		Dir.chdir "log/tasks/#{self.id}"
+		system('rm -f ./*')
+	ensure
+		Dir.chdir Task::APP_DIR
+	end
+
 	private
 		def init_log_folder
 			Dir.chdir 'log'

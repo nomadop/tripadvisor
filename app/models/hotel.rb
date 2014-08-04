@@ -350,11 +350,10 @@ class Hotel < ActiveRecord::Base
 			num_regexp = /\b(\d+([\-\/]\d+)?([\-\/]\d+)?([\-\/]\d+)?[A-E]?)\b/
 			if hotelA.format_address.blank?
 				a_nums = hotelA.street_address.scan(num_regexp).map { |a| a[0] }
-				b_nums = hotelB.street_address.scan(num_regexp).map { |a| a[0] }
 			else
 				a_nums = hotelA.format_address.scan(num_regexp).map { |a| a[0] }
-				b_nums = hotelB.format_address.scan(num_regexp).map { |a| a[0] }
 			end
+			b_nums = hotelB.format_address.scan(num_regexp).map { |a| a[0] }
 			a_nums.uniq.each do |an|
 				b_nums.uniq.each do |bn|
 					if an == bn
@@ -606,14 +605,9 @@ class Hotel < ActiveRecord::Base
 
 	def self.update_or_create_hotels_by_country_name_from_tripadvisor country_name, load_reviews, logger = Hotel, ignore_citys = []
 		logger.tripadvisor_log("start mission: update_or_create_hotels_by_country_name_from_tripadvisor(#{country_name}, #{load_reviews})", reset: true, level: :info)
-		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name, ignore_list: ignore_citys, logger: logger)
-		# task = Thread.new {}
-		city_urls.inject([]) do |result, city_url|
-			hotel_infos = TripadvisorCrawler.get_all_infos_by_geourl(city_url, load_reviews: load_reviews, logger: logger)
-			# task.join
-			# task = Thread.new do
-			result += hotel_infos.map { |hotel_info| update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info) }
-			# end
+		hotel_infos = TripadvisorCrawler.get_hotel_infos_by_country_name(country_name, load_reviews, logger, ignore_citys)
+		hotel_infos.map do |hotel_info|
+			update_or_create_hotel_by_hotel_info_from_tripadvisor(hotel_info)
 		end
 	end
 

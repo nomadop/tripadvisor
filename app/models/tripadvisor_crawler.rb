@@ -4,7 +4,98 @@ class TripadvisorCrawler
 	URL = 'http://www.tripadvisor.com'
 	HOTEL_REVIEW_URL = '/Hotel_Review-d%dnum.html'
 	QUERY_URL = '/TypeAheadJson'
+
+	class Worker
+		attr_accessor :block, :weight, :status, :value, :thread, :timeout
+
+		QUEUE = []
+		MUTEX = Mutex.new
+
+		def initialize weight, timeout, &block
+			@block = block
+			@weight = weight
+			@timeout = timeout
+			@status = 'ready'
+			Worker::MUTEX.synchronize do
+				Worker.bininsert(Worker::QUEUE, self){ |e| e.weight }
+			end
+		end
+
+		def run
+			return false unless self.ready?
+			@status = 'alive'
+			@thread = Thread.new do
+				value = @block.call(@weight)
+				@status = 'dead'
+				@value = value
+			end
+			true
+		end
+
+		def join
+			while self.ready?
+				sleep 10
+			end
+			@thread.join
+		end
+
+		def alive?
+			@status == 'alive'
+		end
+
+		def ready?
+			@status == 'ready'
+		end
+
+		def self.clear
+			Worker::QUEUE.clear
+		end
+
+		def self.run
+			while Worker::QUEUE.select{|w| w.ready?}.size > 0
+				while Worker::QUEUE.select{|w| w.alive?}.size > 30 
+					sleep 10
+				end
+				w = Worker::QUEUE.select{|w| w.ready?}[0]
+				w.run
+				sleep w.timeout
+				# File.open("log.txt", "a+") { |file| file.puts Worker::QUEUE.map{|w| [w.weight, w.status]}.inspect }
+			end
+		end
+
+		def self.bininsert arr, ele, order = :asc
+			base = 2 ** (arr.size.to_s(2).size - 1)
+			index = 0
+			cmp = order == :asc ? :> : :<
+			while base > 0 && index < arr.size
+				# pp [index, base]
+				while arr[index + base] == nil || (block_given? ? yield(arr[index + base]).send(cmp, yield(ele)) : arr[index + base].send(cmp, ele))
+					break if base == 0
+					base >>= 1
+				end
+				index += base
+			end
+			index += 1 if arr[index] && (block_given? ? yield(ele).send(cmp, yield(arr[index])) : ele.send(cmp, arr[index]))
+			arr.insert(index, ele)
+		end
+	end
 	
+	def self.get_hotel_infos_by_country_name country_name, load_reviews, logger = Hotel, ignore_citys = []
+		city_urls = TripadvisorCrawler.get_city_urls_by_country_name(country_name, ignore_list: ignore_citys, logger: logger)
+		Worker.clear
+		workers = []
+		city_urls.each_with_index do |city_url, index|
+			workers << Worker.new(index * 10, 1) do
+				TripadvisorCrawler.get_all_infos_by_geourl(city_url, index * 10, load_reviews: load_reviews, logger: logger)
+			end
+		end
+		Worker.run
+		workers.each { |w| w.join }
+		hotel_infos = workers.inject([]) do |res, w|
+			res += w.value
+		end
+	end
+
 	def self.get_conn
 		conn = Faraday.new(:url => TripadvisorCrawler::URL) do |builder|
 			builder.request		:url_encoded
@@ -213,9 +304,10 @@ class TripadvisorCrawler
 		options = args.last
 		options[:load_reviews] = true if options[:load_reviews] == nil
 
-		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_geourl(#{url.split('/').last})", level: :info
+		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_geourl(#{url.split('/').last})", level: :info if options[:logger]
 
 		# puts options
+		# File.open("log.txt", "a+") { |io| io.puts options.inspect }
 
 		conn = get_conn
 		response = conn.get url
@@ -230,10 +322,10 @@ class TripadvisorCrawler
 		doc.css('#ACCOM_OVERVIEW .listing').each do |hotel|
 			hotel_urls << TripadvisorCrawler::URL + hotel.css('.quality a:first')[0]['href']
 		end
-		options[:logger].tripadvisor_log "    got #{count} hotels", level: :info
 		if options[:only_count] == true
 			return count
 		end
+		options[:logger].tripadvisor_log "    got #{count} hotels", level: :info
 		30.step(count, 30) do |p|
 			break if p == count
 			response = conn.get url.split('-').insert(url.split('-').size - 2, "oa#{p}").join('-')
@@ -250,25 +342,35 @@ class TripadvisorCrawler
 		if options[:only_url] == true
 			return hotel_urls
 		end
-		tasks = []
-    mutex = Mutex.new
-		hotel_urls.each do |url|
-			while tasks.select{ |t| t.alive? }.size >= 25
-				sleep 1
+		# tasks = []
+		# mutex = Mutex.new
+		# hotel_urls.each do |url|
+		# 	while tasks.select{ |t| t.alive? }.size >= 25
+		# 		sleep 1
+		# 	end
+		# 	tasks << Thread.new do
+		# 		task_number = tasks.size
+		# 		# options[:logger].tripadvisor_log "Thread(#{task_number}) start!"
+		# 		hotel_info = get_hotel_info_by_hotelurl(url, options.merge(task_number: task_number))
+		# 		mutex.synchronize do
+		# 			hotel_infos << hotel_info if hotel_info
+		# 		end
+		# 		# options[:logger].tripadvisor_log "Thread(#{task_number}) finish!"
+		# 	end
+		# 	sleep 0.1
+		# end
+		# tasks.each { |t| t.join }
+		workers = []
+		hotel_urls.each_with_index do |url, index|
+			weight = "#{options[:weight]}.#{"%05d" % (index + 1)}".to_f
+			workers << Worker.new(weight, 0.1) do |wid|
+				TripadvisorCrawler.get_hotel_info_by_hotelurl(url, options.merge({task_number: wid}))
 			end
-			tasks << Thread.new do
-				task_number = tasks.size
-				# options[:logger].tripadvisor_log "Thread(#{task_number}) start!"
-				hotel_info = get_hotel_info_by_hotelurl(url, options.merge(task_number: task_number))
-				mutex.synchronize do
-					hotel_infos << hotel_info if hotel_info
-				end
-				# options[:logger].tripadvisor_log "Thread(#{task_number}) finish!"
-			end
-			sleep 0.1
 		end
-		tasks.each { |t| t.join }
-		return hotel_infos
+		workers.each { |w| w.join }
+		hotel_infos = workers.inject([]) do |res, w|
+			res << w.value
+		end
 	rescue Faraday::TimeoutError => e
 		options[:logger].tripadvisor_log "Timeout when Got hotel_infos from #{url.split('/').last}, retry:", level: :warning
 		get_hotel_infos_by_geourl(url, options)
@@ -278,10 +380,17 @@ class TripadvisorCrawler
 		return []
 	end
 
-	def self.get_all_infos_by_geourl url, *args
-		get_hotel_infos_by_geourl(url, *args) +
-		get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), *args) +
-		get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), *args)
+	def self.get_all_infos_by_geourl url, weight, *args
+		# get_hotel_infos_by_geourl(url, *args) +
+		# get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), *args) +
+		# get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), *args)
+		w1 = Worker.new(weight + 1,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url, args[0].merge({weight: weight + 1})) }
+		w2 = Worker.new(weight + 2,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), args[0].merge({weight: weight + 2})) }
+		w3 = Worker.new(weight + 3,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), args[0].merge({weight: weight + 3})) }
+		w1.join
+		w2.join
+		w3.join
+		w1.value + w2.value + w3.value
 	end
 
 	def self.get_hotel_infos_by_gnum gnum

@@ -1,6 +1,12 @@
 class TasksController < ApplicationController
   before_action :set_task, only: [:show, :edit, :update, :destroy, :log, :run]
 
+  def clear_log
+    @task.clear_log_folder
+
+    render text: 'success'
+  end
+
   def run
     @task.run
 
