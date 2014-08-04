@@ -10,7 +10,7 @@ class TasksController < ApplicationController
   def run
     @task.run
 
-    render text: ''
+    redirect_to @task
   end
 
   def log

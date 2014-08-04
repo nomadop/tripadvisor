@@ -148,6 +148,9 @@ class TripadvisorCrawler
 	rescue Faraday::TimeoutError => e
 		logger.tripadvisor_log "Timeout when Got hotel_reviews from #{url.split('/').last}, retry:", level: :warning
 		get_hotel_reviews_by_hotelurl(url, conn, logger)
+	rescue Faraday::ConnectionFailed => e
+		logger.tripadvisor_log "Timeout when Got hotel_reviews from #{url.split('/').last}, retry:", level: :warning
+		get_hotel_reviews_by_hotelurl(url, conn, logger)
 	rescue Exception => e
 		logger.tripadvisor_log(level: :error) do |file|
 			file.puts "#{e.inspect}:"
@@ -272,6 +275,9 @@ class TripadvisorCrawler
 		rescue Faraday::TimeoutError => e
 			options[:logger].tripadvisor_log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} WARNING: Timeout when Got hotel_info from #{url.split('/').last}, retry:", level: :warning
 			get_hotel_info_by_hotelurl(url, *args)
+		rescue Faraday::ConnectionFailed => e
+			options[:logger].tripadvisor_log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} WARNING: Timeout when Got hotel_info from #{url.split('/').last}, retry:", level: :warning
+			get_hotel_info_by_hotelurl(url, *args)
 		rescue Exception => e
 			p e
 			puts e.backtrace
@@ -372,7 +378,7 @@ class TripadvisorCrawler
 		# tasks.each { |t| t.join }
 		workers = []
 		hotel_urls.each_with_index do |url, index|
-			weight = "#{options[:weight]}#{"%05d" % (index + 1)}".to_f
+			weight = "#{options[:weight]}#{"%04d" % (index + 1)}".to_f
 			workers << Worker.new(weight, 0.1) do |wid|
 				TripadvisorCrawler.get_hotel_info_by_hotelurl(url, options.merge({task_number: wid}))
 			end
@@ -382,6 +388,9 @@ class TripadvisorCrawler
 			res << w.value
 		end
 	rescue Faraday::TimeoutError => e
+		options[:logger].tripadvisor_log "Timeout when Got hotel_infos from #{url.split('/').last}, retry:", level: :warning
+		get_hotel_infos_by_geourl(url, options)
+	rescue Faraday::ConnectionFailed => e
 		options[:logger].tripadvisor_log "Timeout when Got hotel_infos from #{url.split('/').last}, retry:", level: :warning
 		get_hotel_infos_by_geourl(url, options)
 	rescue Exception => e
