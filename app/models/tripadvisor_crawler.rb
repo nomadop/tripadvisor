@@ -457,7 +457,7 @@ class TripadvisorCrawler
 		options = args.last
 		options[:ignore_list] = [] if options[:ignore_list] == nil
 
-		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_country_name(#{country_name})", level: :info
+		options[:logger].tripadvisor_log "Task start: get_city_urls_by_country_name(#{country_name})", level: :info
 
 		query = {
 			action: 'API',
@@ -482,7 +482,17 @@ class TripadvisorCrawler
 		count = doc.css('.pgCount')[0].content.split(' ').last.gsub(/\,/, '').to_i
 		20.step(count, 20) do |p|
 			break if p == count
-			response = conn.get url.split('-').insert(2, "oa#{p}").join('-')
+			flag = 'pending'
+			while flag == 'pending'
+				begin
+					response = conn.get url.split('-').insert(2, "oa#{p}").join('-')
+					flag = 'current'
+				rescue Faraday::TimeoutError => e
+					flag = 'pending'
+				rescue Exception => e
+					raise e
+				end
+			end
 			doc = Nokogiri::HTML(response.body)
 			city_urls += doc.css('.geo_name a').map { |a| a['href'] unless options[:ignore_list].include?(a.content[0...-7]) }
 		end
