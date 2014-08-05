@@ -30,6 +30,7 @@ class Task < ActiveRecord::Base
 	def get_and_match_hotels
 		cname = options[:cname]
 		ccode = options[:ccode]
+		reviews = options[:reviews] == 'true' ? true : false
 		match_options = options[:match_options].keys.inject({}) do |result, key|
 			result[key.to_sym] = options[:match_options][key]
 			result
@@ -37,7 +38,7 @@ class Task < ActiveRecord::Base
 		match_options ||= {}
 
 		Hotel.update_or_create_hotels_from_asiatravel_by_country_code(ccode)
-		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, true, self)
+		Hotel.update_or_create_hotels_by_country_name_from_tripadvisor(cname, reviews, self)
 		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, match_options.merge(logger: self))
 	end
 
