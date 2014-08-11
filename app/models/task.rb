@@ -42,6 +42,10 @@ class Task < ActiveRecord::Base
 		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(cname, match_options.merge(logger: self))
 	end
 
+	def match_hotels
+		Hotel.match_hotels_between_tripadvisor_and_asiatravel_by_country(options[:cname], options.merge(logger: self))
+	end
+
 	ACCEPTABLE_JOB_TYPES = Task.instance_methods(false).map(&:to_s)
 
 	def log_folder
