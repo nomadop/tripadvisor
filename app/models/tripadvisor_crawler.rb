@@ -263,10 +263,10 @@ class TripadvisorCrawler
 			return hotel_info
 		rescue Faraday::TimeoutError => e
 			options[:logger].tripadvisor_log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} WARNING: Timeout when Got hotel_info from #{url.split('/').last}, retry:", level: :warning
-			get_hotel_info_by_hotelurl(url, *args)
+			get_hotel_info_by_hotelurl(url, options)
 		rescue Faraday::ConnectionFailed => e
 			options[:logger].tripadvisor_log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} WARNING: Timeout when Got hotel_info from #{url.split('/').last}, retry:", level: :warning
-			get_hotel_info_by_hotelurl(url, *args)
+			get_hotel_info_by_hotelurl(url, options)
 		rescue Exception => e
 			options[:logger].tripadvisor_log(level: :error) do |file|
 				file.puts "#{e.inspect}:"
