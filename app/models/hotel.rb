@@ -203,7 +203,6 @@ class Hotel < ActiveRecord::Base
 				file.puts "[#{Time.now.strftime("%H:%M:%S")}] #{offset} of #{total}: the most hotel similar to (#{hotelA.name}) is (#{matched_hotel.name}), similarity is #{similarity}"
 				file.puts "    #{hotelA.name}: #{hotelA.format_address.blank? ? hotelA.street_address : hotelA.format_address}"
 				file.puts "    #{matched_hotel.name}: #{hotelA.format_address.blank? ? matched_hotel.street_address : matched_hotel.format_address}"
-				file.puts "    distance is #{GeocodingApi.get_distance(hotelA.location['lat'].to_f, hotelA.location['lng'].to_f, matched_hotel.location['latlng'][0]['lat'], matched_hotel.location['latlng'][0]['lng'])}"
 				file.puts '=' * 100
 			end
 		end
