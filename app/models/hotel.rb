@@ -172,6 +172,10 @@ class Hotel < ActiveRecord::Base
 		end
 	end
 
+	def error_log *args, &block
+		log(Dir.pwd + '/log/error.log', *args, &block)
+	end
+
 	def self.simi_log *args, &block
 		log(Dir.pwd + "/log/similarity.log", *args, &block)
 	end
