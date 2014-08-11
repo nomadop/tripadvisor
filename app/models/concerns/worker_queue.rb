@@ -66,11 +66,18 @@ module WorkerQueue
 		@@status = 0
 		@@queue = []
 		@@mutex = Mutex.new
+		@@concurrency = 30
 
-		def self.test
-			synchronize do
-				@@queue
-			end
+		def self.queue
+			@@queue
+		end
+
+		def self.concurrency
+			@@concurrency
+		end
+
+		def self.concurrency= concurrency
+			@@concurrency = concurrency
 		end
 
 		def self.new weight, timeout, &block
@@ -100,7 +107,7 @@ module WorkerQueue
 			return false if @@status == 1
 			@@status = 1
 			while synchronize{ @@queue.select{|w| w.ready?}.size } > 0 && @@status == 1
-				while synchronize{ @@queue.select{|w| w.alive?}.size } > 30 && @@status == 1
+				while synchronize{ @@queue.select{|w| w.alive?}.size } > @@concurrency && @@status == 1
 					sleep 10
 				end
 				w = @@queue.select{|w| w.ready?}[0]
