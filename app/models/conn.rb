@@ -18,4 +18,15 @@ class Conn
 		return conn
 	end
 
+	Faraday::Connection.class_eval do
+		def try method, *args, &block
+			raise 'No such method' unless [:post, :get].include?(method)
+			send(method, *args, &block)
+		rescue Faraday::TimeoutError => e
+			try(method, *args, &block)
+		rescue Faraday::ConnectionFailed => e
+			try(method, *args, &block)
+		end
+	end
+
 end

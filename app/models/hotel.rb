@@ -496,27 +496,6 @@ class Hotel < ActiveRecord::Base
 		return hotel
 	end
 
-	# def self.init_hotels_from_asiatravel city_name = nil
-	# 	conn = Conn.init('http://asia.senscape.com.cn')
-	# 	response = conn.get '/users/login'
-	# 	conn.headers['cookie'] = response.headers['set-cookie']
-	# 	doc = Nokogiri::HTML(response.body)
-	# 	authenticity_token = doc.css("[name='authenticity_token']")[0]['value']
-	# 	response = conn.post '/users/check_password', {
-	# 		utf8: '✓',
-	# 		authenticity_token: authenticity_token,
-	# 		email: 'nomadop@gmail.com',
-	# 		pwd: '366534743'
-	# 	}
-	# 	conn.headers['cookie'] = response.headers['set-cookie']
-	# 	conn.params['city'] = city_name if city_name
-	# 	response = conn.get '/hotels.json'
-	# 	hotel_infos = JSON.parse(response.body)
-	# 	hotel_infos.map do |hotel_info|
-	# 		create_hotel_by_hotel_info_from_asiatravel(hotel_info)
-	# 	end
-	# end
-
 	def self.update_or_create_hotels_from_asiatravel_by_country_code_and_city_code country_code, city_code, ingore_ids = []
 		# conn = Conn.init('http://asia.senscape.com.cn', timeout: 1.day.to_i)
 		# # conn = Conn.init('http://localhost:3000', timeout: 1.day.to_i)

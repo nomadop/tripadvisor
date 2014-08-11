@@ -403,9 +403,9 @@ class TripadvisorCrawler
 		# get_hotel_infos_by_geourl(url, *args) +
 		# get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), *args) +
 		# get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), *args)
-		w1 = Worker.new(weight + 0.1,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url, args[0].merge({weight: weight + 0.1})) }
-		w2 = Worker.new(weight + 0.2,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), args[0].merge({weight: weight + 0.2})) }
-		w3 = Worker.new(weight + 0.3,60){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), args[0].merge({weight: weight + 0.3})) }
+		w1 = Worker.new(weight + 0.1,30){ TripadvisorCrawler.get_hotel_infos_by_geourl(url, args[0].merge({weight: weight + 0.1})) }
+		w2 = Worker.new(weight + 0.2,30){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), args[0].merge({weight: weight + 0.2})) }
+		w3 = Worker.new(weight + 0.3,30){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), args[0].merge({weight: weight + 0.3})) }
 		w1.join
 		w2.join
 		w3.join
