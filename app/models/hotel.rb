@@ -50,12 +50,8 @@ class Hotel < ActiveRecord::Base
     end
   end
 
-	def address *args
-		args << {} unless args.last.instance_of?(Hash)
-		options = args.last
-
-		address = format_address || street_address
-		address.gsub!(/\b(d{5})\b/, '') if options[:no_post] == true
+	def address
+		format_address || street_address || ""
 	end
 
 	def remove_postal_code_from_address range
@@ -201,8 +197,8 @@ class Hotel < ActiveRecord::Base
 			offset += 1
 			options[:logger].simi_log(level: :info) do |file|
 				file.puts "[#{Time.now.strftime("%H:%M:%S")}] #{offset} of #{total}: the most hotel similar to (#{hotelA.name}) is (#{matched_hotel.name}), similarity is #{similarity}"
-				file.puts "    #{hotelA.name}: #{hotelA.format_address.blank? ? hotelA.street_address : hotelA.format_address}"
-				file.puts "    #{matched_hotel.name}: #{hotelA.format_address.blank? ? matched_hotel.street_address : matched_hotel.format_address}"
+				file.puts "    #{hotelA.name}: #{hotelA.address}"
+				file.puts "    #{matched_hotel.name}: #{matched_hotel.address}"
 				file.puts '=' * 100
 			end
 		end
@@ -351,12 +347,8 @@ class Hotel < ActiveRecord::Base
 		similarity = 0
 		if options[:with_num] == true
 			num_regexp = /\b(\d+([\-\/]\d+)?([\-\/]\d+)?([\-\/]\d+)?[A-E]?)\b/
-			if hotelA.format_address.blank?
-				a_nums = hotelA.street_address.scan(num_regexp).map { |a| a[0] }
-			else
-				a_nums = hotelA.format_address.scan(num_regexp).map { |a| a[0] }
-			end
-			b_nums = hotelB.format_address.scan(num_regexp).map { |a| a[0] }
+			a_nums = hotelA.address.scan(num_regexp).map { |a| a[0] }
+			b_nums = hotelB.address.scan(num_regexp).map { |a| a[0] }
 			a_nums.uniq.each do |an|
 				b_nums.uniq.each do |bn|
 					if an == bn
@@ -366,11 +358,7 @@ class Hotel < ActiveRecord::Base
 			end
 		end
 		similarity += self.send(options[:algorithm], hotelA.name, hotelB.name) * options[:name_weight]
-		if hotelA.format_address.blank?
-			similarity += self.send(options[:algorithm], hotelA.street_address, hotelB.street_address) * options[:address_weight]
-		else
-			similarity += self.send(options[:algorithm], hotelA.format_address, hotelB.format_address) * options[:address_weight]
-		end
+		similarity += self.send(options[:algorithm], hotelA.address, hotelB.address) * options[:address_weight]
 		if options[:with_distance] == true
 			unless hotelB.location['latlng'].blank?
 				latlngs = hotelB.location['latlng']
