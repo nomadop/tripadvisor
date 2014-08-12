@@ -108,7 +108,8 @@ class TripadvisorCrawler
 	end
 
 	def self.get_hotel_info_by_hotelurl url, options = {}
-		options[:lang] = 'zhCN' if options[:lang] == nil
+		default_opts = {lang: 'zhCN'}
+		options = default_opts.merge(options)
 
 		options[:logger].tripadvisor_log "Task#{options[:task_number] ? "(#{options[:task_number]})" : ""} get: #{url.split('/').last}", level: :info
 
@@ -208,10 +209,9 @@ class TripadvisorCrawler
 		get_hotel_info_by_hotelurl(location)
 	end
 
-	def self.get_hotel_infos_by_geourl url, *args
-		args << {} unless args.last.instance_of?(Hash)
-		options = args.last
-		options[:load_reviews] = true if options[:load_reviews] == nil
+	def self.get_hotel_infos_by_geourl url, options = {}
+		default_opts = {load_reviews: true}
+		options = default_opts.merge(options)
 
 		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_geourl(#{url.split('/').last})", level: :info if options[:logger]
 
@@ -286,13 +286,13 @@ class TripadvisorCrawler
 		return []
 	end
 
-	def self.get_all_infos_by_geourl url, weight, timeout, *args
-		# get_hotel_infos_by_geourl(url, *args) +
-		# get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), *args) +
-		# get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), *args)
-		w1 = WorkerQueue.new(weight + 0.1, timeout){ TripadvisorCrawler.get_hotel_infos_by_geourl(url, args[0].merge({weight: weight + 0.1})) }
-		w2 = WorkerQueue.new(weight + 0.2, timeout){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), args[0].merge({weight: weight + 0.2})) }
-		w3 = WorkerQueue.new(weight + 0.3, timeout){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), args[0].merge({weight: weight + 0.3})) }
+	def self.get_all_infos_by_geourl url, weight, timeout, options = {}
+		# get_hotel_infos_by_geourl(url, options) +
+		# get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), options) +
+		# get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), options)
+		w1 = WorkerQueue.new(weight + 0.1, timeout){ TripadvisorCrawler.get_hotel_infos_by_geourl(url, options.merge({weight: weight + 0.1})) }
+		w2 = WorkerQueue.new(weight + 0.2, timeout){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c2").join('-'), options.merge({weight: weight + 0.2})) }
+		w3 = WorkerQueue.new(weight + 0.3, timeout){ TripadvisorCrawler.get_hotel_infos_by_geourl(url.split('-').insert(2, "c3").join('-'), options.merge({weight: weight + 0.3})) }
 		w1.join
 		w2.join
 		w3.join
@@ -303,10 +303,9 @@ class TripadvisorCrawler
 		
 	end
 
-	def self.get_hotel_infos_by_city_name city_name, *args
-		args << {} unless args.last.instance_of?(Hash)
-		options = args.last
-		options[:load_reviews] = true if options[:load_reviews] == nil
+	def self.get_hotel_infos_by_city_name city_name, options = {}
+		default_opts = {load_reviews: true}
+		options = default_opts.merge(options)
 
 		options[:logger].tripadvisor_log "Task start: get_hotel_infos_by_city_name(#{city_name})", level: :info
 
@@ -328,7 +327,7 @@ class TripadvisorCrawler
 		response = conn.post TripadvisorCrawler::QUERY_URL, query
 		result = JSON.parse(response.body)['results'].select{|r| r['title'] == 'Destinations'}[0]
 		if result
-			get_all_infos_by_geourl(result['url'], *args)
+			get_all_infos_by_geourl(result['url'], options)
 		else
 			[]
 		end
@@ -348,10 +347,9 @@ class TripadvisorCrawler
 		end
 	end
 
-	def self.get_city_urls_by_country_name country_name, *args
-		args << {} unless args.last.instance_of?(Hash)
-		options = args.last
-		options[:ignore_list] = [] if options[:ignore_list] == nil
+	def self.get_city_urls_by_country_name country_name, options = {}
+		default_opts = {ignore_list: []}
+		options = default_opts.merge(options)
 
 		options[:logger].tripadvisor_log "Task start: get_city_urls_by_country_name(#{country_name})", level: :info
 
@@ -396,7 +394,7 @@ class TripadvisorCrawler
 		options[:logger].tripadvisor_log "    got #{city_urls.count} citys", level: :info
 		city_urls
 	rescue Faraday::TimeoutError => e
-		get_city_urls_by_country_name(country_name, *args)
+		get_city_urls_by_country_name(country_name, options)
 	end
 
 end
