@@ -111,7 +111,7 @@ class Task < ActiveRecord::Base
 	end
 
 	def self.busy?
-		Task.pluck(&:status).inject(0){|res, s| res |= s} == 1
+		Task.pluck(:status).inject(0){|res, s| res |= s} == 1
 	end
 
 	def self.job_types
