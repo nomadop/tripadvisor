@@ -3,6 +3,7 @@ class TasksController < ApplicationController
 
   def clear_log
     @task.clear_log_folder
+    @task.update(time_summary: [])
 
     redirect_to @task
   end
