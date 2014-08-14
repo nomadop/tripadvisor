@@ -329,17 +329,18 @@ class Hotel < ActiveRecord::Base
 	# end
 
 	def self.similarity hotelA, hotelB, opts = {}
-		simi_table = HotelsSimilarityTable.find_or_initialize_by(hotela_code: hotelA.id, hotela_tag: hotelA.tag, hotelb_code: hotelB.id, hotelb_tag: hotelB.tag)
-		return simi_table.similarity if simi_table.similarity
-
 		default_opts = {
 			with_distance: true,
 			with_num: true,
 			algorithm: :lcs,
 			name_weight: 0.5,
-			address_weight: 0.5
+			address_weight: 0.5,
+			reload: false
 		}
 		options = default_opts.merge(opts)
+
+		simi_table = HotelsSimilarityTable.find_or_initialize_by(hotela_code: hotelA.id, hotela_tag: hotelA.tag, hotelb_code: hotelB.id, hotelb_tag: hotelB.tag)
+		return simi_table.similarity if simi_table.similarity != nil && options[:reload] == false
 
 		if options[:debug]
 			options[:logger].simi_log do |file|
