@@ -390,7 +390,8 @@ class Hotel < ActiveRecord::Base
 			end
 		end
 		#puts "similarity between (#{hotelA.name}) and (#{hotelB.name}) is #{similarity}"
-		simi_table.similarity = similarity.round(6)
+		simi_table.update(similarity: similarity.round(6))
+		simi_table.similarity
 	end
 
 	def self.lcs str1, str2, base_on = :min
