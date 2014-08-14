@@ -23,6 +23,8 @@ class Task < ActiveRecord::Base
 
 	APP_DIR = Dir.pwd
 
+	Task.update_all(status: 0)
+
 	def send_hotel_score_cache_to_senscape
 		Hotel.post_hotel_score_caches_to_senscape(options)
 	end
