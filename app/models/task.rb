@@ -5,6 +5,7 @@ class Task < ActiveRecord::Base
 	after_initialize :init_serialize
 
 	serialize :options, Hash
+	serialize :time_summary, Array
 
 	STATUS = {
 		start_up: -1,
@@ -82,6 +83,10 @@ class Task < ActiveRecord::Base
 		whenever_add
 	end
 
+	def arrange_time
+		time_summary.sum * 1.0 / time_summary.size
+	end
+
 	def run
 		unless status == Task::STATUS[:running]
 			self.update(status: Task::STATUS[:running]) 
@@ -90,7 +95,8 @@ class Task < ActiveRecord::Base
 		end
 
 		begin
-			self.send(self.job_type)
+			s_time = Time.now.to_i
+			send(job_type)
 		rescue Exception => e
 			error_log(level: :error) do |file|
 				file.puts "[#{Time.now}] #{e.inspect}:"
@@ -99,7 +105,9 @@ class Task < ActiveRecord::Base
 				end
 			end
 		ensure
-			self.update(status: Task::STATUS[:ready])
+			self.status = Task::STATUS[:ready]
+			self.time_summary << Time.now.to_i - s_time
+			self.save
 		end
 	end
 
@@ -179,5 +187,6 @@ class Task < ActiveRecord::Base
 				result[key.to_sym] = options[key]
 				result
 			end
+			self.time_summary ||= []
 		end
 end
