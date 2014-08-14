@@ -123,13 +123,11 @@ class Hotel < ActiveRecord::Base
 	end
 
 	def match_hotels_from_other_tag hotels, opts = {}
+		WorkerQueue
 		simi_table = hotels.inject([]) do |table, hotel|
-			simi = Hotel.similarity(self, hotel, opts)
-			i = 0
-			for i in (0..table.size) do
-				break if table[i] && table[i][1] < simi
-			end
-			table.insert(i, [hotel, simi])
+			hst = HotelsSimilarityTable.find_or_create_by(self, hotel)
+			simi = hst.similarity(opts)
+			table.bininsert([hotel, simi], :desc) { |e| e[1] }
 		end
 		self.hotel_id = simi_table[0][0].id
 		self.save
@@ -339,8 +337,8 @@ class Hotel < ActiveRecord::Base
 		}
 		options = default_opts.merge(opts)
 
-		simi_table = HotelsSimilarityTable.find_or_initialize_by(hotela_code: hotelA.id, hotela_tag: hotelA.tag, hotelb_code: hotelB.id, hotelb_tag: hotelB.tag)
-		return simi_table.similarity if simi_table.similarity != nil && options[:reload] == false
+		# simi_table = HotelsSimilarityTable.find_or_initialize_by(hotela_code: hotelA.id, hotela_tag: hotelA.tag, hotelb_code: hotelB.id, hotelb_tag: hotelB.tag)
+		# return simi_table.similarity if simi_table.similarity != nil && options[:reload] == false
 
 		if options[:debug]
 			options[:logger].simi_log do |file|
@@ -390,8 +388,8 @@ class Hotel < ActiveRecord::Base
 			end
 		end
 		#puts "similarity between (#{hotelA.name}) and (#{hotelB.name}) is #{similarity}"
-		simi_table.update(similarity: similarity.round(6))
-		simi_table.similarity
+		# simi_table.update(similarity: similarity.round(6))
+		similarity.round(6)
 	end
 
 	def self.lcs str1, str2, base_on = :min
