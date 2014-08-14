@@ -1,0 +1,15 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  hotela_code: 1
+  hotela_tag: MyString
+  hotelb_code: 1
+  hotelb_tag: MyString
+  similarity: 1.5
+
+two:
+  hotela_code: 1
+  hotela_tag: MyString
+  hotelb_code: 1
+  hotelb_tag: MyString
+  similarity: 1.5

@@ -87,12 +87,9 @@ class Task < ActiveRecord::Base
 	end
 
 	def run
-		if Task.busy?
-			return false
-		else
-			self.update(status: Task::STATUS[:running]) 
-		end
-
+		return false if self.status == Task::STATUS[:running]
+		
+		self.update(status: Task::STATUS[:running])
 		begin
 			s_time = Time.now.to_i
 			send(job_type)

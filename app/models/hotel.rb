@@ -329,6 +329,9 @@ class Hotel < ActiveRecord::Base
 	# end
 
 	def self.similarity hotelA, hotelB, opts = {}
+		simi_table = HotelsSimilarityTable.find_or_initialize_by(hotela_code: hotelA.id, hotela_tag: hotelA.tag, hotelb_code: hotelB.id, hotelb_tag: hotelB.tag)
+		return simi_table.similarity if simi_table.similarity
+
 		default_opts = {
 			with_distance: true,
 			with_num: true,
@@ -337,6 +340,7 @@ class Hotel < ActiveRecord::Base
 			address_weight: 0.5
 		}
 		options = default_opts.merge(opts)
+
 		if options[:debug]
 			options[:logger].simi_log do |file|
 				file.puts options
@@ -385,7 +389,7 @@ class Hotel < ActiveRecord::Base
 			end
 		end
 		#puts "similarity between (#{hotelA.name}) and (#{hotelB.name}) is #{similarity}"
-		return similarity
+		simi_table.similarity = similarity.round(6)
 	end
 
 	def self.lcs str1, str2, base_on = :min
