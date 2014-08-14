@@ -91,12 +91,13 @@ class Hotel < ActiveRecord::Base
 		post_hotel_score_cache_to_senscape(hotel, conn)
 	end
 
-	def self.post_hotel_score_caches_to_senscape *args
-		args << {} unless args.last.instance_of?(Hash)
-		options = args.last
-		options[:host] = 'http://asia.senscape.com.cn' if options[:host] == nil
-		options[:login] = 'nomadop@gmail.com' if options[:login] == nil
-		options[:pwd] = '366534743' if options[:pwd] == nil
+	def self.post_hotel_score_caches_to_senscape opts = {}
+		default_opts = {
+			host: 'http://asia.senscape.com.cn',
+			login: 'nomadop@gmail.com',
+			pwd: '366534743'
+		}
+		options = default_opts.merge(opts)
 
 		conn = Conn.init(options[:host])
 		response = conn.get '/users/login'
@@ -121,9 +122,9 @@ class Hotel < ActiveRecord::Base
 		self.format_address.blank? ? self.street_address : self.format_address
 	end
 
-	def match_hotels_from_other_tag hotels, *args
+	def match_hotels_from_other_tag hotels, opts = {}
 		simi_table = hotels.inject([]) do |table, hotel|
-			simi = Hotel.similarity(self, hotel, *args)
+			simi = Hotel.similarity(self, hotel, opts)
 			i = 0
 			for i in (0..table.size) do
 				break if table[i] && table[i][1] < simi
@@ -142,10 +143,8 @@ class Hotel < ActiveRecord::Base
 		# end
 	end
 
-	def self.match_hotels_between_tripadvisor_and_asiatravel_by_country country_name, *args
-		args << {} unless args.last.instance_of?(Hash)
-		options = args.last
-		options[:logger] = Hotel if options[:logger] == nil
+	def self.match_hotels_between_tripadvisor_and_asiatravel_by_country country_name, opts = {}
+		options = {logger:Hotel}.merge(opts)
 
 		options[:logger].simi_log(reset: true, level: :info) {|file| file.puts "start:"}
 
@@ -180,22 +179,20 @@ class Hotel < ActiveRecord::Base
 		log(Dir.pwd + "/log/tripadvisor.log", *args, &block)
 	end
 
-	def self.match_hotels_between_tripadvisor_and_asiatravel_by_city country_name, city_name, *args
-		args << {} unless args.last.instance_of?(Hash)
-		options = args.last
-		options[:logger] = self if options[:logger] == nil
+	def self.match_hotels_between_tripadvisor_and_asiatravel_by_city country_name, city_name, opts = {}
+		opts = {logger:Hotel}.merge(opts)
 
 		hotelsA = Hotel.where(tag: 'asiatravel').city(city_name)
 		hotelsB = Hotel.where(tag: 'tripadvisor').city(city_name)
 		hotelsB = Hotel.where(tag: 'tripadvisor').city(country_name) if hotelsB.empty?
-		offset = options[:offset] ? options[:offset] : 0
-		total = options[:total] ? options[:total] : hotelsA.size
+		offset = opts[:offset] ? opts[:offset] : 0
+		total = opts[:total] ? opts[:total] : hotelsA.size
 		hotelsA.each do |hotelA|
-			result = hotelA.match_hotels_from_other_tag(hotelsB, *args)
+			result = hotelA.match_hotels_from_other_tag(hotelsB, opts)
 			matched_hotel = result[0]
 			similarity = result[1]
 			offset += 1
-			options[:logger].simi_log(level: :info) do |file|
+			opts[:logger].simi_log(level: :info) do |file|
 				file.puts "[#{Time.now.strftime("%H:%M:%S")}] #{offset} of #{total}: the most hotel similar to (#{hotelA.name}) is (#{matched_hotel.name}), similarity is #{similarity}"
 				file.puts "    #{hotelA.name}: #{hotelA.address}"
 				file.puts "    #{matched_hotel.name}: #{matched_hotel.address}"
@@ -331,14 +328,15 @@ class Hotel < ActiveRecord::Base
 	# 	end
 	# end
 
-	def self.similarity hotelA, hotelB, *args
-		args << {} unless args.last.instance_of?(Hash)
-		options = args.last
-		options[:with_distance] = true if options[:with_distance] == nil
-		options[:with_num] = true if options[:with_num] == nil
-		options[:algorithm] = :lcs if options[:algorithm] == nil
-		options[:name_weight] = 0.5 if options[:name_weight] == nil
-		options[:address_weight] = 0.5 if options[:address_weight] == nil
+	def self.similarity hotelA, hotelB, opts = {}
+		default_opts = {
+			with_distance: true,
+			with_num: true,
+			algorithm: :lcs,
+			name_weight: 0.5,
+			address_weight: 0.5
+		}
+		options = default_opts.merge(opts)
 		if options[:debug]
 			options[:logger].simi_log do |file|
 				file.puts options

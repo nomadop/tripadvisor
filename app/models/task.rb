@@ -46,30 +46,28 @@ class Task < ActiveRecord::Base
 		Task::APP_DIR + "/log/tasks/#{self.id}"
 	end
 
-	def log log_file, *args, &block
-		args << {} unless args.last.instance_of?(Hash)
-		options = args.last
-		options[:level] = :debug if options[:level] == nil
+	def log log_file, opts = {}, &block
+		opts[:level] = :debug if opts[:level] == nil
 
-		if Task::LOG_LEVELS[options[:level]] >= Task::LOG_LEVELS[Task::LOG_LEVEL]
+		if Task::LOG_LEVELS[opts[:level]] >= Task::LOG_LEVELS[Task::LOG_LEVEL]
 			if block_given?
-				File.open(log_file, options[:reset] ? "w" : "a+", &block)
+				File.open(log_file, opts[:reset] ? "w" : "a+", &block)
 			else
-				File.open(log_file, options[:reset] ? "w" : "a+") {|file| file.puts "[#{Time.now.strftime("%H:%M:%S")}] #{args[0]}"}
+				File.open(log_file, opts[:reset] ? "w" : "a+") {|file| file.puts "[#{Time.now.strftime("%H:%M:%S")}] #{args[0]}"}
 			end
 		end
 	end
 
-	def error_log *args, &block
-		log(log_folder + '/error.log', *args, &block)
+	def error_log opts = {}, &block
+		log(log_folder + '/error.log', opts, &block)
 	end
 
-	def simi_log *args, &block
-		log(log_folder + "/simi_#{Time.now.strftime("%y%m%d")}.log", *args, &block)
+	def simi_log opts = {}, &block
+		log(log_folder + "/simi_#{Time.now.strftime("%y%m%d")}.log", opts, &block)
 	end
 
-	def tripadvisor_log *args, &block
-		log(log_folder + "/tripadvisor_#{Time.now.strftime("%y%m%d")}.log", *args, &block)
+	def tripadvisor_log opts = {}, &block
+		log(log_folder + "/tripadvisor_#{Time.now.strftime("%y%m%d")}.log", opts, &block)
 	end
 
 	def log_list
