@@ -8,7 +8,6 @@ class Task < ActiveRecord::Base
 	serialize :time_summary, Array
 
 	STATUS = {
-		start_up: -1,
 		ready: 0,
 		running: 1
 	}
@@ -88,10 +87,10 @@ class Task < ActiveRecord::Base
 	end
 
 	def run
-		unless status == Task::STATUS[:running]
-			self.update(status: Task::STATUS[:running]) 
-		else
+		if Task.busy?
 			return false
+		else
+			self.update(status: Task::STATUS[:running]) 
 		end
 
 		begin
@@ -109,6 +108,10 @@ class Task < ActiveRecord::Base
 			self.time_summary << Time.now.to_i - s_time
 			self.save
 		end
+	end
+
+	def self.busy?
+		Task.pluck(&:status).inject(0){|res, s| res |= s} == 1
 	end
 
 	def self.job_types
@@ -177,7 +180,7 @@ class Task < ActiveRecord::Base
 		end
 
 		def check_job_type
-			self.status = Task::STATUS[:start_up]
+			self.status = Task::STATUS[:ready]
 			Task.job_types.include?(self.job_type)
 		end
 
