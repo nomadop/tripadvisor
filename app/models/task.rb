@@ -83,7 +83,7 @@ class Task < ActiveRecord::Base
 	end
 
 	def arrange_time
-		time_summary.sum * 1.0 / time_summary.size
+		time_summary.blank? ? 0 : time_summary.sum * 1.0 / time_summary.size
 	end
 
 	def run
