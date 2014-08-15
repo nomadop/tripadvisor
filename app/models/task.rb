@@ -46,7 +46,9 @@ class Task < ActiveRecord::Base
 		Task::APP_DIR + "/log/tasks/#{self.id}"
 	end
 
-	def log log_file, opts = {}, &block
+	def log log_file, *args, &block
+		args << {} unless args.last.is_a?(Hash)
+		opts = args.last
 		opts[:level] = :debug if opts[:level] == nil
 
 		if Task::LOG_LEVELS[opts[:level]] >= Task::LOG_LEVELS[Task::LOG_LEVEL]
@@ -58,16 +60,16 @@ class Task < ActiveRecord::Base
 		end
 	end
 
-	def error_log opts = {}, &block
-		log(log_folder + '/error.log', opts, &block)
+	def error_log *args, &block
+		log(log_folder + '/error.log', *args, &block)
 	end
 
-	def simi_log opts = {}, &block
-		log(log_folder + "/simi_#{Time.now.strftime("%y%m%d")}.log", opts, &block)
+	def simi_log *args, &block
+		log(log_folder + "/simi_#{Time.now.strftime("%y%m%d")}.log", *args, &block)
 	end
 
-	def tripadvisor_log opts = {}, &block
-		log(log_folder + "/tripadvisor_#{Time.now.strftime("%y%m%d")}.log", opts, &block)
+	def tripadvisor_log *args, &block
+		log(log_folder + "/tripadvisor_#{Time.now.strftime("%y%m%d")}.log", *args, &block)
 	end
 
 	def log_list
