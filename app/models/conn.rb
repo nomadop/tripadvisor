@@ -13,7 +13,7 @@ class Conn
 			builder.options.timeout = options[:timeout] || 5           # open/read timeout in seconds
   		builder.options.open_timeout = options[:open_timeout] || 2
 		end
-		conn.headers['User-Agent'] = "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36"
+		conn.headers['User-Agent'] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36"
 		yield conn if block_given?
 		return conn
 	end

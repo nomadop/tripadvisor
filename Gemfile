@@ -57,3 +57,5 @@ gem 'geokit'
 
 gem 'savon', path: 'vendor/gems'
 gem "gyoku", :path=>"vendor/gems"
+
+gem 'watir-webdriver'
