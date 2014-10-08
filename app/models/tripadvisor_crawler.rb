@@ -126,6 +126,7 @@ class TripadvisorCrawler
 			response = conn.get url
 			return nil unless response.status == 200
 			doc = Nokogiri::HTML(response.body)
+			ll_reg = /center=(\d+\.\d+),(\d+\.\d+)/
 			hotel_info = {}
 			hotel_info[:source_id] = /d(\d+)/.match(url)[1].to_i
 			hotel_info[:name] = doc.css('h1#HEADING')[0].content.gsub(/\n/, '')
@@ -144,9 +145,9 @@ class TripadvisorCrawler
 			hotel_info[:star_rating] = doc.css('.star .rate img')[0]['alt'].split(' ').first.to_f if doc.css('.star .rate img')[0]
 			hotel_info[:format_address] = doc.css('.format_address')[0].content.gsub(/\n/, '') if doc.css('.format_address')[0]
 			hotel_info[:street_address] = doc.css('.format_address .street-address')[0].content if doc.css('.format_address .street-address')[0]
-			if doc.css('script').to_s.scan(/[lat|lng]: (\d+\.\d+)/).size >= 2
-				coord = doc.css('script').to_s.scan(/[lat|lng]: (\d+\.\d+)/)
-				latlng = [{'lat' => coord[0][0].to_f, 'lng' => coord[1][0].to_f}]
+			if doc.to_i =~ ll_reg
+				coord = doc.to_i.scan(ll_reg)[0]
+				latlng = [{'lat' => coord[0].to_f, 'lng' => coord[1].to_f}]
 			else
 				latlng = []
 			end
